@@ -1,0 +1,854 @@
+<title>NEWSSPUR</title>
+<meta name="description" content="Mockup der automatischen Nachrichten-App NEWSSPUR." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+
+<style>
+  :root {
+    /* light — plain black on paper, one scarlet that does the shouting */
+    --stage: #E7E6E1;
+    --ground: #EEEDE8;
+    --paper: #FFFFFF;
+    --ink: #0B0B0B;
+    --ink-2: #3B3B38;
+    --ink-3: #74736E;
+    --line: #0B0B0B;
+    --line-soft: #DEDDD6;
+    --red: #E11D0F;
+    --red-ink: #C0140A;
+    --red-soft: #FBE7E4;
+    --on-red: #FFFFFF;
+    --shadow: 0 2px 4px rgba(11,11,11,.05), 0 22px 60px rgba(11,11,11,.14);
+    --font-display: 'Oswald', 'Arial Narrow', 'Helvetica Neue', Impact, sans-serif;
+    --font-body: 'Hanken Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --stage: #000000;
+      --ground: #0D0D0C;
+      --paper: #151513;
+      --ink: #F3F1EC;
+      --ink-2: #C6C4BD;
+      --ink-3: #86847C;
+      --line: #F3F1EC;
+      --line-soft: #2B2B27;
+      --red: #FF4335;
+      --red-ink: #FF6A5F;
+      --red-soft: #351310;
+      --on-red: #FFFFFF;
+      --shadow: 0 2px 4px rgba(0,0,0,.4), 0 26px 64px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --stage: #000000;
+    --ground: #0D0D0C;
+    --paper: #151513;
+    --ink: #F3F1EC;
+    --ink-2: #C6C4BD;
+    --ink-3: #86847C;
+    --line: #F3F1EC;
+    --line-soft: #2B2B27;
+    --red: #FF4335;
+    --red-ink: #FF6A5F;
+    --red-soft: #351310;
+    --on-red: #FFFFFF;
+    --shadow: 0 2px 4px rgba(0,0,0,.4), 0 26px 64px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--stage);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .stage { min-height: 100dvh; display: grid; place-items: center; padding: 28px 20px; }
+
+  .app {
+    position: relative;
+    width: min(432px, 100vw);
+    height: min(888px, calc(100dvh - 56px));
+    background: var(--paper);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    isolation: isolate;
+  }
+  @media (max-width: 480px) {
+    .stage { padding: 0; }
+    .app { width: 100vw; height: 100dvh; border: 0; box-shadow: none; }
+  }
+
+  /* ---------- masthead / bar ---------- */
+  .bar { flex: none; background: var(--paper); border-bottom: 3px solid var(--line); z-index: 5; }
+  .bar-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 14px 16px 12px; }
+
+  .masthead { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 31px;
+    line-height: .9;
+    letter-spacing: .005em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+  .claim {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 8.5px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--on-red);
+    background: var(--red);
+    padding: 3px 7px 2px;
+  }
+
+  .bar-actions { display: flex; gap: 2px; }
+  .icon {
+    appearance: none; border: 0; background: transparent; color: var(--ink-2);
+    width: 32px; height: 32px; font-size: 14px; font-family: var(--font-body);
+    cursor: pointer; display: grid; place-items: center;
+    transition: color .12s, background .12s;
+  }
+  .icon:hover { color: var(--ink); background: var(--line-soft); }
+  .icon svg { width: 17px; height: 17px; display: block; }
+  .icon:focus-visible, .tab:focus-visible, .card:focus-visible, .back:focus-visible, .sw:focus-visible, .sources a:focus-visible {
+    outline: 3px solid var(--red); outline-offset: 2px;
+  }
+
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 0; padding: 0 12px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    appearance: none; border: 0; background: transparent;
+    color: var(--ink-3);
+    font-family: var(--font-display); font-weight: 600; font-size: 13px;
+    letter-spacing: .04em; text-transform: uppercase;
+    padding: 11px 13px 12px; white-space: nowrap; cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -3px;
+    transition: color .12s;
+  }
+  .tab:hover { color: var(--ink-2); }
+  .tab.is-active { color: var(--ink); border-bottom-color: var(--red); }
+
+  /* ---------- scroll ---------- */
+  .scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: var(--paper); }
+
+  .feed-date {
+    margin: 0; padding: 13px 16px 12px;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  #cards { display: flex; flex-direction: column; }
+
+  .card {
+    display: block; width: 100%; text-align: left;
+    background: var(--paper); border: 0; border-top: 2px solid var(--line);
+    padding: 16px; cursor: pointer; appearance: none; font: inherit; color: inherit;
+    transition: background .12s;
+  }
+  #cards .card:first-child { border-top: 0; }
+  .card:hover { background: var(--line-soft); }
+
+  .thumb {
+    position: relative;
+    display: block;
+    margin: -16px -16px 13px;
+    aspect-ratio: 16 / 8.6;
+  }
+  .card.lead .thumb { aspect-ratio: 16 / 10.5; }
+  .thumb::after {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(122deg, rgba(255,255,255,.05) 0 2px, transparent 2px 8px);
+  }
+  .ph-de { background: #1f2a33; background-image: linear-gradient(135deg, #22323f, #10181e); }
+  .ph-tr { background: #33211d; background-image: linear-gradient(135deg, #3c211b, #1c110e); }
+  .ph-na { background: #2b2a20; background-image: linear-gradient(135deg, #302f22, #171712); }
+  .thumb .credit {
+    position: absolute; left: 0; bottom: 0; z-index: 1;
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--on-red); background: var(--red); padding: 3px 8px 2px;
+  }
+  .thumb.noimg {
+    background: var(--ground);
+    display: grid; place-items: center;
+    border-bottom: 2px solid var(--line);
+  }
+  .thumb.noimg::after { display: none; }
+  .thumb.noimg span {
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+  }
+
+  .card-body { display: flex; flex-direction: column; gap: 9px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font-family: var(--font-body); font-weight: 700; font-size: 9px;
+    letter-spacing: .09em; text-transform: uppercase; line-height: 1.6;
+    color: var(--paper); background: var(--ink); padding: 2px 6px;
+  }
+
+  .headline {
+    margin: 0;
+    font-family: var(--font-display); font-weight: 600; font-size: 22px;
+    line-height: 1.14; letter-spacing: 0; color: var(--ink);
+    text-wrap: balance;
+  }
+  .card.lead .headline {
+    font-weight: 700; font-size: 32px; line-height: 1.04; letter-spacing: .004em;
+    text-transform: uppercase;
+  }
+  .teaser { margin: 0; font-size: 13.5px; line-height: 1.46; color: var(--ink-2); }
+  .card.lead .teaser { font-size: 14.5px; }
+
+  .sourceline {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .04em;
+    color: var(--ink-3); font-variant-numeric: tabular-nums;
+    padding-top: 2px;
+  }
+  .spur { display: inline-flex; gap: 2px; }
+  .spur i { width: 6px; height: 8px; background: var(--red); display: block; }
+  .sourceline .sep { color: var(--line-soft); }
+  .badge-auto {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: var(--paper); background: var(--ink); padding: 2px 7px 1px;
+    letter-spacing: .08em; text-transform: uppercase; font-weight: 500;
+  }
+  .badge-auto::before { content: ""; width: 5px; height: 5px; background: var(--red); }
+
+  .held {
+    margin: 0; padding: 16px;
+    border-top: 2px solid var(--line);
+    font-size: 12px; line-height: 1.5; color: var(--ink-2);
+  }
+  .held b { font-family: var(--font-mono); font-weight: 600; color: var(--red-ink); font-size: 11px; }
+  .legal {
+    margin: 0; padding: 14px 16px 26px;
+    border-top: 1px solid var(--line-soft);
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .08em; line-height: 1.8;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+
+  /* ---------- detail ---------- */
+  .detail { position: absolute; inset: 0; background: var(--paper); display: flex; flex-direction: column; z-index: 8; }
+  .detail[hidden] { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .detail.enter { animation: slidein .18s ease-out; }
+  }
+  @keyframes slidein { from { transform: translateX(12px); opacity: .3; } to { transform: none; opacity: 1; } }
+
+  .back {
+    appearance: none; border: 0; background: transparent; color: var(--ink);
+    font-family: var(--font-body); font-weight: 700; font-size: 11px;
+    letter-spacing: .07em; text-transform: uppercase; cursor: pointer;
+    padding: 6px 2px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .back:hover { color: var(--red-ink); }
+
+  #detail-body { padding: 0 0 44px; }
+  .d-wrap { padding: 18px 16px 0; display: flex; flex-direction: column; gap: 11px; }
+  .d-headline {
+    margin: 2px 0 0;
+    font-family: var(--font-display); font-weight: 700; font-size: 30px;
+    line-height: 1.08; letter-spacing: .004em; text-wrap: balance;
+  }
+  .d-hero { aspect-ratio: 16 / 9; margin: 15px 0 0; position: relative; }
+  .d-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(122deg, rgba(255,255,255,.05) 0 2px, transparent 2px 8px);
+  }
+  .d-hero .credit {
+    position: absolute; left: 0; bottom: 0; z-index: 1;
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--on-red); background: var(--red); padding: 3px 8px 2px;
+  }
+  .d-hero.noimg { background: var(--ground); display: grid; place-items: center; border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+  .d-hero.noimg::after { display: none; }
+  .d-hero.noimg span { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+
+  .d-section { padding: 18px 16px 0; }
+  .d-section + .d-section { border-top: 2px solid var(--line); margin-top: 18px; }
+  .d-label {
+    margin: 0 0 11px; padding-left: 13px; position: relative;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--ink);
+  }
+  .d-label::before { content: ""; position: absolute; left: 0; top: 1px; bottom: 1px; width: 4px; background: var(--red); }
+  .d-label .note { text-transform: none; letter-spacing: .01em; color: var(--ink-3); font-size: 9.5px; }
+  .d-summary { margin: 0; font-family: var(--font-body); font-size: 15.5px; line-height: 1.55; color: var(--ink); }
+
+  .facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+  .facts li { display: flex; flex-direction: column; gap: 4px; }
+  .fact-text { font-size: 14.5px; line-height: 1.48; }
+  .fact-src { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .03em; color: var(--ink-3); }
+  .fact-src b { color: var(--ink); font-weight: 600; }
+
+  .panel {
+    background: var(--red-soft); border: 2px solid var(--red);
+    padding: 14px 15px; margin: 18px 16px 0;
+  }
+  .panel + .d-section { border-top: 0; }
+  .panel .d-label { color: var(--red-ink); }
+  .panel .d-label::before { background: var(--red); }
+  .disputes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .disputes li { font-size: 13.5px; line-height: 1.5; padding-left: 18px; position: relative; }
+  .disputes li::before { content: "\2260"; position: absolute; left: 0; color: var(--red-ink); font-weight: 700; }
+
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li {
+    display: grid; grid-template-columns: 46px 1fr; gap: 10px;
+    padding: 9px 0 9px 13px; font-size: 13.5px; line-height: 1.42;
+    border-left: 2px solid var(--line); position: relative;
+  }
+  .timeline li::before { content: ""; position: absolute; left: -4px; top: 14px; width: 7px; height: 7px; background: var(--red); }
+  .timeline li:last-child { border-left-color: transparent; }
+  .tl-time { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); padding-top: 1px; }
+
+  .press { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 15px; }
+  .press-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .press-haus { font-weight: 700; font-size: 12.5px; }
+  .press-typ {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-3); border: 1px solid var(--line-soft); padding: 1px 5px;
+  }
+  .press-zitat {
+    margin: 6px 0 0; font-family: var(--font-body); font-weight: 500; font-style: italic; font-size: 15px;
+    line-height: 1.4; color: var(--ink-2); padding-left: 12px; border-left: 3px solid var(--red);
+  }
+
+  .sources { list-style: none; margin: 0; padding: 0; }
+  .sources li { border-bottom: 1px solid var(--line-soft); }
+  .sources li:last-child { border-bottom: 0; }
+  .sources a { display: flex; align-items: center; gap: 8px; padding: 11px 2px; text-decoration: none; color: var(--ink); font-size: 13.5px; }
+  .sources a:hover .src-name { color: var(--red-ink); }
+  .src-name { font-weight: 600; }
+  .src-typ { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+  .src-typ.flag { color: var(--red-ink); }
+  .src-go { margin-left: auto; color: var(--ink-3); font-size: 15px; }
+
+  .nahost-note {
+    margin: 18px 16px 0; padding: 13px 15px;
+    border: 2px solid var(--line);
+    font-size: 12.5px; line-height: 1.5; color: var(--ink); display: flex; gap: 9px;
+  }
+  .nahost-note::before { content: "\24D8"; color: var(--red-ink); font-size: 15px; line-height: 1.1; flex: none; }
+
+  .credit-note {
+    text-align: center; padding: 20px 12px 6px;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .credit-note b { color: var(--red-ink); font-weight: 600; }
+
+  /* ---------- sheets ---------- */
+  .scrim { position: absolute; inset: 0; z-index: 20; background: rgba(8,8,8,.5); }
+  .scrim[hidden] { display: none; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 21;
+    background: var(--paper); border-top: 3px solid var(--line);
+    padding: 8px 16px 24px; max-height: 84%; overflow-y: auto;
+  }
+  .sheet[hidden] { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .sheet:not([hidden]) { animation: sheetup .2s cubic-bezier(.2,.7,.3,1); }
+  }
+  @keyframes sheetup { from { transform: translateY(100%); } to { transform: none; } }
+  .sheet-grip { width: 36px; height: 4px; background: var(--line); margin: 4px auto 15px; }
+  .sheet h2 { margin: 0 0 5px; font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: .01em; text-transform: uppercase; }
+  .sheet .sub { margin: 0 0 16px; font-size: 12.5px; color: var(--ink-3); }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; counter-reset: s; }
+  .steps li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+  .steps li::before {
+    counter-increment: s; content: counter(s,decimal-leading-zero);
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    color: var(--on-red); background: var(--red);
+    width: 22px; height: 22px; display: grid; place-items: center;
+  }
+  .steps b { color: var(--ink); font-weight: 700; }
+  .sheet .fineprint {
+    margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line-soft);
+    font-family: var(--font-mono); font-size: 9px; line-height: 1.75; letter-spacing: .04em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .toggles { margin-top: 4px; }
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 13px 0; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; font-weight: 600;
+  }
+  .toggle-row:last-child { border-bottom: 0; }
+  .toggle-row small { display: block; font-size: 11px; font-weight: 400; color: var(--ink-3); margin-top: 2px; }
+  .sw {
+    appearance: none; cursor: pointer; flex: none;
+    width: 42px; height: 24px; background: var(--line-soft); border: 2px solid var(--line);
+    position: relative; transition: background .15s;
+  }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--ink); transition: transform .15s; }
+  .sw:checked { background: var(--red); border-color: var(--red); }
+  .sw:checked::after { transform: translateX(18px); background: var(--on-red); }
+</style>
+
+<div class="stage">
+  <div class="app" id="app">
+
+    <!-- ============ FEED ============ -->
+    <header class="bar" id="feed-bar">
+      <div class="bar-top">
+        <div class="masthead">
+          <span class="logo">Newsspur</span>
+          <span class="claim">Kein Blatt vor dem Mund</span>
+        </div>
+        <div class="bar-actions">
+          <button class="icon" id="btn-info" aria-label="So arbeitet NEWSSPUR" title="So arbeitet NEWSSPUR">?</button>
+          <button class="icon" id="btn-bell" aria-label="Benachrichtigungen" title="Benachrichtigungen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </button>
+          <button class="icon" id="btn-theme" aria-label="Farbschema wechseln" title="Hell / Dunkel">◐</button>
+        </div>
+      </div>
+      <nav class="tabs" id="tabs" aria-label="Kategorien">
+        <button class="tab is-active" data-tab="alle">Alle</button>
+        <button class="tab" data-tab="deutschland">Deutschland</button>
+        <button class="tab" data-tab="tuerkei">Türkei</button>
+        <button class="tab" data-tab="nahost">Nahost</button>
+      </nav>
+    </header>
+
+    <main class="scroll" id="feed">
+      <p class="feed-date">Montag · 1. September 2026 · <span id="upd">aktualisiert vor 6 Min</span></p>
+      <div id="cards"></div>
+      <p class="held" id="held"></p>
+      <p class="legal">NEWSSPUR · automatischer Nachrichten-Dienst · Demo-Ansicht mit Beispielmeldungen</p>
+    </main>
+
+    <!-- ============ DETAIL ============ -->
+    <section class="detail" id="detail" hidden aria-hidden="true">
+      <header class="bar">
+        <div class="bar-top">
+          <button class="back" id="btn-back">‹ Übersicht</button>
+          <div class="bar-actions">
+            <button class="icon" id="btn-theme2" aria-label="Farbschema wechseln" title="Hell / Dunkel">◐</button>
+          </div>
+        </div>
+      </header>
+      <div class="scroll" id="detail-body"></div>
+    </section>
+
+    <!-- ============ SHEETS ============ -->
+    <div class="scrim" id="scrim" hidden></div>
+
+    <aside class="sheet" id="sheet-info" hidden aria-label="So arbeitet NEWSSPUR">
+      <div class="sheet-grip"></div>
+      <h2>So arbeitet Newsspur</h2>
+      <p class="sub">Jede Meldung entsteht automatisch – hier ist der Weg.</p>
+      <ol class="steps">
+        <li><span><b>Sammeln.</b> Alle 30 Minuten aus geprüften Quellen: öffentlich-rechtliche Sender, überregionale Zeitungen, Nachrichtenagenturen.</span></li>
+        <li><span><b>Bündeln.</b> Meldungen zum selben Ereignis werden zu einem Thema zusammengefasst.</span></li>
+        <li><span><b>Prüfen.</b> Ein Thema erscheint erst, wenn mindestens <b>zwei unabhängige Quellen</b> es bestätigen.</span></li>
+        <li><span><b>Zusammenfassen.</b> Eine KI schreibt die Kurzfassung – nur aus den Original-Anrissen, ohne eigene Wertung. Jeder Satz ist einer Quelle zugeordnet.</span></li>
+        <li><span><b>Widersprüche zeigen.</b> Wo Quellen sich uneinig sind, steht das offen unter „Strittige Punkte“ – gerade bei Nahost-Themen.</span></li>
+      </ol>
+      <p class="fineprint">Jede Meldung ist als automatisch erstellt gekennzeichnet und verlinkt alle Originale. Für deren Inhalte sind die jeweiligen Herausgeber verantwortlich.</p>
+    </aside>
+
+    <aside class="sheet" id="sheet-bell" hidden aria-label="Benachrichtigungen">
+      <div class="sheet-grip"></div>
+      <h2>Benachrichtigungen</h2>
+      <p class="sub">Push nur bei wichtigen, mehrfach bestätigten Meldungen – höchstens fünf pro Tag.</p>
+      <div class="toggles">
+        <label class="toggle-row">Deutschland<input type="checkbox" class="sw" checked></label>
+        <label class="toggle-row">Türkei<input type="checkbox" class="sw" checked></label>
+        <label class="toggle-row">Nahost-Konflikt<input type="checkbox" class="sw"></label>
+        <label class="toggle-row">
+          <span>Nur Eilmeldungen<small>Sehr hohe Wichtigkeit, Sicherheit „hoch“</small></span>
+          <input type="checkbox" class="sw">
+        </label>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  const STORIES = [
+    {
+      id: 'erdogan-berlin',
+      kat: { deutschland: 92, tuerkei: 95, nahost: 8 },
+      bild: 'de', credit: 'Foto: Tagesschau',
+      schlagzeile: 'Erdoğan trifft Kanzler Merz in Berlin – Gespräch über Syrien und Migration',
+      teaser: 'Beim ersten Besuch seit zwei Jahren ging es vor allem um die Lage in Nordsyrien und ein geplantes Rückführungsabkommen.',
+      zeit: 'vor 34 Min',
+      quellen: [
+        { name: 'Tagesschau', typ: 'öffentlich-rechtlich' },
+        { name: 'Zeit Online', typ: 'Zeitung' },
+        { name: 'DW Türkçe', typ: 'unabhängig' },
+        { name: 'Anadolu Ajansı', typ: 'staatsnah', flag: true },
+        { name: 'Reuters', typ: 'Agentur' }
+      ],
+      sicherheit: 'hoch',
+      zusammenfassung: 'Der türkische Präsident Recep Tayyip Erdoğan ist zu einem Arbeitsbesuch in Berlin. Im Kanzleramt traf er Bundeskanzler Merz zu einem rund 90-minütigen Gespräch. Themen waren nach Angaben beider Seiten die Lage in Nordsyrien, die Migrationszusammenarbeit und die Wirtschaftsbeziehungen. Ein neues Rückführungsabkommen wurde angekündigt, aber noch nicht unterzeichnet.',
+      fakten: [
+        { text: 'Das Treffen im Kanzleramt dauerte rund 90 Minuten.', q: ['Tagesschau', 'Reuters'] },
+        { text: 'Als Themen nannten beide Seiten Nordsyrien, Migration und Wirtschaftsbeziehungen.', q: ['Tagesschau', 'DW Türkçe', 'Anadolu Ajansı'] },
+        { text: 'Ein Rückführungsabkommen wurde angekündigt, aber nicht unterzeichnet.', q: ['Zeit Online', 'Reuters'] }
+      ],
+      strittig: [],
+      zeitverlauf: [
+        { t: '09:15', x: 'Erstmeldung: Erdoğans Maschine in Berlin gelandet' },
+        { t: '11:40', x: 'Treffen im Kanzleramt begonnen' },
+        { t: '13:30', x: 'Gemeinsame Pressekonferenz – diese Meldung aktualisiert' }
+      ],
+      medienschau: [
+        { haus: 'Süddeutsche Zeitung', typ: 'Kommentar', zitat: 'Ein Besuch, der mehr Fragen offenlässt als beantwortet.' },
+        { haus: 'Die Welt', typ: 'Analyse', zitat: 'Berlin braucht Ankara – und Ankara weiß das genau.' },
+        { haus: 'taz', typ: 'Kommentar', zitat: 'Von Menschenrechten war wieder nur am Rande die Rede.' }
+      ]
+    },
+    {
+      id: 'nahost-chan-junis',
+      kat: { deutschland: 6, tuerkei: 14, nahost: 88 },
+      bild: null,
+      schlagzeile: 'Berichte über Luftangriff bei Chan Yunis – Angaben zu Opfern gehen auseinander',
+      teaser: 'Mehrere Quellen melden eine Explosion im Süden des Gazastreifens. Zahl und Umstände der Opfer werden sehr unterschiedlich dargestellt.',
+      zeit: 'vor 1 Std',
+      quellen: [
+        { name: 'Al Jazeera', typ: 'staatsnah (Katar)', flag: true },
+        { name: 'Times of Israel', typ: 'Zeitung' },
+        { name: 'BBC Middle East', typ: 'öffentlich-rechtlich' },
+        { name: 'UN News', typ: 'offiziell' }
+      ],
+      sicherheit: 'mittel',
+      zusammenfassung: 'In der Nacht gab es nahe Chan Yunis im Süden des Gazastreifens eine Explosion. Laut Al Jazeera wurden dabei mehrere Zivilistinnen und Zivilisten getötet. Die israelische Armee spricht laut Times of Israel von einem gezielten Schlag gegen einen Kommandeur. Unabhängig bestätigen lässt sich der Vorgang bislang nicht.',
+      fakten: [
+        { text: 'Nahe Chan Yunis gab es in der Nacht eine Explosion.', q: ['Al Jazeera', 'BBC Middle East', 'Times of Israel'] },
+        { text: 'Die israelische Armee bestätigt einen Einsatz in dem Gebiet.', q: ['Times of Israel', 'BBC Middle East'] },
+        { text: 'Die UN fordert eine unabhängige Untersuchung.', q: ['UN News'] }
+      ],
+      strittig: [
+        'Opferzahl: Al Jazeera nennt acht Tote, die israelische Armee (laut Times of Israel) spricht von einem getöteten Kombattanten.',
+        'Ziel des Angriffs: „Wohnhaus“ (Al Jazeera) gegenüber „Kommandozentrale“ (Times of Israel).'
+      ],
+      hinweis: 'Angaben zu Opfern und Verantwortung unterscheiden sich je nach Quelle. NEWSSPUR nennt beide Darstellungen und wertet nicht.'
+    },
+    {
+      id: 'stromsteuer',
+      kat: { deutschland: 96, tuerkei: 0, nahost: 0 },
+      bild: 'de', credit: 'Foto: Deutschlandfunk',
+      schlagzeile: 'Bundestag beschließt Senkung der Stromsteuer für Haushalte',
+      teaser: 'Die Entlastung soll ab Januar gelten und einen Durchschnittshaushalt rund 100 Euro im Jahr sparen.',
+      zeit: 'vor 2 Std',
+      quellen: [
+        { name: 'Tagesschau', typ: 'öffentlich-rechtlich' },
+        { name: 'Deutschlandfunk', typ: 'öffentlich-rechtlich' },
+        { name: 'Der Spiegel', typ: 'Zeitung' }
+      ],
+      sicherheit: 'hoch',
+      zusammenfassung: 'Der Bundestag hat mit der Mehrheit der Koalition eine Senkung der Stromsteuer für private Haushalte beschlossen. Die Steuer sinkt auf das europäische Mindestmaß. Ein Durchschnittshaushalt soll dadurch rund 100 Euro im Jahr sparen. Der Bundesrat muss dem Gesetz noch zustimmen.',
+      fakten: [
+        { text: 'Der Bundestag stimmte mit der Mehrheit der Koalition zu.', q: ['Tagesschau', 'Deutschlandfunk'] },
+        { text: 'Die Stromsteuer sinkt auf das EU-Mindestmaß.', q: ['Tagesschau', 'Der Spiegel'] },
+        { text: 'Der Bundesrat muss noch zustimmen.', q: ['Deutschlandfunk'] }
+      ],
+      strittig: []
+    },
+    {
+      id: 'tuerkei-inflation',
+      kat: { deutschland: 8, tuerkei: 94, nahost: 0 },
+      bild: 'tr', credit: 'Foto: Reuters',
+      schlagzeile: 'Türkei: Inflationsrate fällt den achten Monat in Folge',
+      teaser: 'Die Jahresrate liegt laut Statistikamt bei 29 Prozent – niedriger als vor einem Jahr, aber weiter hoch.',
+      zeit: 'vor 3 Std',
+      quellen: [
+        { name: 'Anadolu Ajansı', typ: 'staatsnah', flag: true },
+        { name: 'DW Türkçe', typ: 'unabhängig' },
+        { name: 'Reuters', typ: 'Agentur' }
+      ],
+      sicherheit: 'mittel',
+      zusammenfassung: 'Das türkische Statistikamt gibt die Jahresinflation für August mit 29 Prozent an – der achte Rückgang in Folge. Reuters bestätigt die Zahl. Die unabhängige Ökonomengruppe ENAG kommt laut DW Türkçe auf einen deutlich höheren Wert.',
+      fakten: [
+        { text: 'Das Statistikamt nennt für August eine Jahresinflation von 29 Prozent.', q: ['Anadolu Ajansı', 'Reuters'] },
+        { text: 'Unabhängige Ökonomen (ENAG) schätzen die Rate höher ein.', q: ['DW Türkçe'] }
+      ],
+      strittig: [
+        'Höhe der tatsächlichen Inflation: amtlich 29 Prozent, unabhängige Schätzung (ENAG) rund 58 Prozent.'
+      ]
+    },
+    {
+      id: 'ruestungsexporte',
+      kat: { deutschland: 82, tuerkei: 6, nahost: 74 },
+      bild: 'na', credit: 'Foto: Der Spiegel',
+      schlagzeile: 'Streit in der Koalition über Rüstungsexporte in den Nahen Osten',
+      teaser: 'Nach einem Medienbericht sollen Genehmigungen gestoppt worden sein. Das Wirtschaftsministerium dementiert einen generellen Stopp.',
+      zeit: 'vor 5 Std',
+      quellen: [
+        { name: 'Der Spiegel', typ: 'Zeitung' },
+        { name: 'Tagesschau', typ: 'öffentlich-rechtlich' },
+        { name: 'Reuters', typ: 'Agentur' }
+      ],
+      sicherheit: 'mittel',
+      zusammenfassung: 'Der Spiegel berichtet unter Berufung auf einen internen Vermerk, die Bundesregierung habe Genehmigungen für bestimmte Rüstungsexporte in den Nahen Osten gestoppt. Das Wirtschaftsministerium bestätigt verschärfte Einzelfallprüfungen, dementiert aber einen pauschalen Stopp. In der Koalition gibt es dazu offen unterschiedliche Positionen.',
+      fakten: [
+        { text: 'Der Spiegel berichtet über einen internen Vermerk zu gestoppten Genehmigungen.', q: ['Der Spiegel'] },
+        { text: 'Das Wirtschaftsministerium bestätigt Einzelfallprüfungen, dementiert einen pauschalen Stopp.', q: ['Tagesschau', 'Reuters'] }
+      ],
+      strittig: [
+        'Ob es einen faktischen Exportstopp gibt: „intern beschlossen“ (Der Spiegel) gegenüber „nur Einzelfallprüfung“ (Ministerium).'
+      ]
+    }
+  ];
+
+  const HELD_N = '4';
+  const HELD_TXT = ' weitere Themen zurückgehalten – zu wenige Quellen oder noch ungeklärte Faktenlage. Sie erscheinen, sobald eine zweite unabhängige Quelle bestätigt.';
+
+  const KAT_LABEL = { deutschland: 'Deutschland', tuerkei: 'Türkei', nahost: 'Nahost' };
+  const KAT_CLASS = { deutschland: 'de', tuerkei: 'tr', nahost: 'na' };
+  const SCHWELLE = 40;
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
+
+  function katsOf(story) { return Object.keys(story.kat).filter((k) => story.kat[k] >= SCHWELLE); }
+  function primaryKat(story) { return Object.keys(story.kat).sort((a, b) => story.kat[b] - story.kat[a])[0]; }
+
+  function renderFeed(tab) {
+    const wrap = $('#cards');
+    wrap.innerHTML = '';
+    const list = STORIES.filter((s) => tab === 'alle' || katsOf(s).includes(tab));
+    list.forEach((s, i) => {
+      const c = card(s);
+      if (i === 0) c.classList.add('lead');
+      wrap.appendChild(c);
+    });
+    const held = $('#held');
+    held.innerHTML = '';
+    const b = el('b'); b.textContent = HELD_N;
+    held.appendChild(b);
+    held.appendChild(document.createTextNode(HELD_TXT));
+  }
+
+  function spurEl(n, katClass) {
+    const w = el('span', 'spur ' + katClass);
+    w.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < n; i++) w.appendChild(el('i'));
+    return w;
+  }
+
+  function sourceLine(s) {
+    const line = el('div', 'sourceline');
+    line.appendChild(spurEl(s.quellen.length, KAT_CLASS[primaryKat(s)]));
+    const c = el('span'); c.textContent = s.quellen.length + ' Quellen'; line.appendChild(c);
+    const sep = el('span', 'sep'); sep.textContent = '/'; line.appendChild(sep);
+    const t = el('span'); t.textContent = s.zeit; line.appendChild(t);
+    const badge = el('span', 'badge-auto'); badge.textContent = 'automatisch'; line.appendChild(badge);
+    return line;
+  }
+
+  function card(s) {
+    const c = el('button', 'card');
+    c.type = 'button';
+    c.dataset.id = s.id;
+    c.setAttribute('aria-label', s.schlagzeile);
+
+    const thumb = el('div', 'thumb');
+    if (s.bild) {
+      thumb.classList.add('ph-' + s.bild);
+      const cr = el('span', 'credit'); cr.textContent = s.credit; thumb.appendChild(cr);
+    } else {
+      thumb.classList.add('noimg');
+      const sp = el('span'); sp.textContent = 'Kein Bild verfügbar'; thumb.appendChild(sp);
+    }
+    c.appendChild(thumb);
+
+    const body = el('div', 'card-body');
+    const chips = el('div', 'chips');
+    katsOf(s).forEach((k) => { const ch = el('span', 'chip ' + KAT_CLASS[k]); ch.textContent = KAT_LABEL[k]; chips.appendChild(ch); });
+    body.appendChild(chips);
+    const h = el('h2', 'headline'); h.textContent = s.schlagzeile; body.appendChild(h);
+    const p = el('p', 'teaser'); p.textContent = s.teaser; body.appendChild(p);
+    body.appendChild(sourceLine(s));
+    c.appendChild(body);
+
+    c.addEventListener('click', () => openDetail(s.id));
+    return c;
+  }
+
+  function openDetail(id) {
+    const s = STORIES.find((x) => x.id === id);
+    if (!s) return;
+    const body = $('#detail-body');
+    body.innerHTML = '';
+
+    const wrap = el('div', 'd-wrap');
+    const chips = el('div', 'chips');
+    katsOf(s).forEach((k) => { const ch = el('span', 'chip ' + KAT_CLASS[k]); ch.textContent = KAT_LABEL[k]; chips.appendChild(ch); });
+    wrap.appendChild(chips);
+    const h = el('h1', 'd-headline'); h.textContent = s.schlagzeile; wrap.appendChild(h);
+    wrap.appendChild(sourceLine(s));
+    body.appendChild(wrap);
+
+    const hero = el('div', 'd-hero');
+    if (s.bild) {
+      hero.classList.add('ph-' + s.bild);
+      const cr = el('span', 'credit'); cr.textContent = s.credit; hero.appendChild(cr);
+    } else {
+      hero.classList.add('noimg');
+      const sp = el('span'); sp.textContent = 'Kein Bild verfügbar'; hero.appendChild(sp);
+    }
+    body.appendChild(hero);
+
+    body.appendChild(section('Zusammenfassung', (sec) => {
+      const p = el('p', 'd-summary'); p.textContent = s.zusammenfassung; sec.appendChild(p);
+    }));
+
+    body.appendChild(section('Fakten & Belege', (sec) => {
+      const ul = el('ul', 'facts');
+      s.fakten.forEach((f) => {
+        const li = el('li');
+        const ft = el('span', 'fact-text'); ft.textContent = f.text; li.appendChild(ft);
+        const fs = el('span', 'fact-src');
+        fs.appendChild(document.createTextNode('belegt durch '));
+        const bb = el('b'); bb.textContent = f.q.join(' · '); fs.appendChild(bb);
+        li.appendChild(fs);
+        ul.appendChild(li);
+      });
+      sec.appendChild(ul);
+    }));
+
+    if (s.strittig && s.strittig.length) {
+      const panel = el('div', 'panel');
+      const lab = el('p', 'd-label'); lab.textContent = 'Strittige Punkte'; panel.appendChild(lab);
+      const ul = el('ul', 'disputes');
+      s.strittig.forEach((d) => { const li = el('li'); li.textContent = d; ul.appendChild(li); });
+      panel.appendChild(ul);
+      body.appendChild(panel);
+    }
+
+    if (s.zeitverlauf && s.zeitverlauf.length) {
+      body.appendChild(section('Zeitverlauf', (sec) => {
+        const ol = el('ol', 'timeline');
+        s.zeitverlauf.forEach((z) => {
+          const li = el('li');
+          const t = el('span', 'tl-time'); t.textContent = z.t; li.appendChild(t);
+          const x = el('span'); x.textContent = z.x; li.appendChild(x);
+          ol.appendChild(li);
+        });
+        sec.appendChild(ol);
+      }));
+    }
+
+    if (s.medienschau && s.medienschau.length) {
+      body.appendChild(section('Medienschau', (sec, lab) => {
+        const note = el('span', 'note'); note.textContent = ' — wie deutsche Medien es einordnen';
+        lab.appendChild(note);
+        const ul = el('ul', 'press');
+        s.medienschau.forEach((m) => {
+          const li = el('li');
+          const head = el('div', 'press-head');
+          const haus = el('span', 'press-haus'); haus.textContent = m.haus; head.appendChild(haus);
+          const typ = el('span', 'press-typ'); typ.textContent = m.typ; head.appendChild(typ);
+          li.appendChild(head);
+          const z = el('p', 'press-zitat'); z.textContent = '„' + m.zitat + '“'; li.appendChild(z);
+          ul.appendChild(li);
+        });
+        sec.appendChild(ul);
+      }));
+    }
+
+    body.appendChild(section('Alle Quellen (' + s.quellen.length + ')', (sec) => {
+      const ul = el('ul', 'sources');
+      s.quellen.forEach((q) => {
+        const li = el('li');
+        const a = el('a'); a.href = '#'; a.setAttribute('aria-label', 'Zum Original bei ' + q.name);
+        a.addEventListener('click', (e) => e.preventDefault());
+        const n = el('span', 'src-name'); n.textContent = q.name; a.appendChild(n);
+        const t = el('span', 'src-typ' + (q.flag ? ' flag' : '')); t.textContent = q.typ; a.appendChild(t);
+        const g = el('span', 'src-go'); g.textContent = '↗'; a.appendChild(g);
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      sec.appendChild(ul);
+    }));
+
+    if (s.hinweis) {
+      const n = el('div', 'nahost-note');
+      n.appendChild(document.createTextNode(s.hinweis));
+      body.appendChild(n);
+    }
+
+    const foot = el('p', 'credit-note');
+    foot.appendChild(document.createTextNode('Automatisch erstellt · Sicherheit: '));
+    const fb = el('b'); fb.textContent = s.sicherheit; foot.appendChild(fb);
+    body.appendChild(foot);
+
+    const d = $('#detail');
+    d.hidden = false;
+    d.setAttribute('aria-hidden', 'false');
+    d.classList.remove('enter'); void d.offsetWidth; d.classList.add('enter');
+    $('#detail-body').scrollTop = 0;
+  }
+
+  function section(label, fill) {
+    const sec = el('div', 'd-section');
+    const lab = el('p', 'd-label'); lab.textContent = label; sec.appendChild(lab);
+    fill(sec, lab);
+    return sec;
+  }
+
+  function closeDetail() {
+    const d = $('#detail');
+    d.hidden = true;
+    d.setAttribute('aria-hidden', 'true');
+  }
+
+  function currentTheme() {
+    const set = document.documentElement.getAttribute('data-theme');
+    if (set) return set;
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function toggleTheme() {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('newsspur-theme', next); } catch (e) {}
+  }
+  try {
+    const saved = localStorage.getItem('newsspur-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) {}
+
+  function openSheet(id) { $('#scrim').hidden = false; $('#' + id).hidden = false; }
+  function closeSheets() { $('#scrim').hidden = true; $('#sheet-info').hidden = true; $('#sheet-bell').hidden = true; }
+
+  $('#tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('.tab');
+    if (!b) return;
+    $('#tabs').querySelectorAll('.tab').forEach((t) => t.classList.toggle('is-active', t === b));
+    renderFeed(b.dataset.tab);
+    try { localStorage.setItem('newsspur-tab', b.dataset.tab); } catch (err) {}
+    $('#feed').scrollTop = 0;
+  });
+  $('#btn-back').addEventListener('click', closeDetail);
+  $('#btn-theme').addEventListener('click', toggleTheme);
+  $('#btn-theme2').addEventListener('click', toggleTheme);
+  $('#btn-info').addEventListener('click', () => openSheet('sheet-info'));
+  $('#btn-bell').addEventListener('click', () => openSheet('sheet-bell'));
+  $('#scrim').addEventListener('click', closeSheets);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeSheets(); if (!$('#detail').hidden) closeDetail(); }
+  });
+
+  let startTab = 'alle';
+  try { startTab = localStorage.getItem('newsspur-tab') || 'alle'; } catch (e) {}
+  const startBtn = $('#tabs').querySelector('[data-tab="' + startTab + '"]') || $('#tabs').querySelector('.tab');
+  $('#tabs').querySelectorAll('.tab').forEach((t) => t.classList.toggle('is-active', t === startBtn));
+  renderFeed(startBtn.dataset.tab);
+</script>
