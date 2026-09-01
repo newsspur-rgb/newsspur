@@ -1,4 +1,5 @@
 import type { Thema, ThemenZusammenfassung } from '../types.js';
+import { KATEGORIE_SCHWELLE } from './kategorien.js';
 
 // Sensible Begriffe: Opfer/Schuld. Bewusst konservativ (lieber einmal zu oft
 // zurueckhalten). Liste waechst mit Erfahrung.
@@ -15,7 +16,7 @@ export interface NahostPruefung {
 }
 
 export function nahostSonderregelPruefen(zusammenfassung: ThemenZusammenfassung, thema: Thema): NahostPruefung {
-  if (zusammenfassung.kategorieWerte.nahost < 40) {
+  if (zusammenfassung.kategorieWerte.nahost < KATEGORIE_SCHWELLE) {
     return { betroffen: false, zurueckhalten: false };
   }
 
