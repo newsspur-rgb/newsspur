@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "pipeline:run": "tsx src/cli.ts"
+    "pipeline:run": "tsx src/cli.ts",
+    "pipeline:demo": "tsx src/demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
