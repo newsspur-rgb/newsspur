@@ -1,6 +1,12 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-**Letzter Stand:** 2026-09-01 (abends) – „morgen weiter"
+**Letzter Stand:** 2026-09-03 – Projekte getrennt
+
+**Repo:** eigenständig unter `~/Desktop/newsspur` (Branch `main`). Früher im
+gemeinsamen `~/Desktop/newsapp` – der wurde am 2026-09-03 aufgeteilt:
+NEWSSPUR → `~/Desktop/newsspur`, Bora-Chat → `~/Desktop/bora`,
+Kids-Channel → `~/Desktop/kids-channel`. Der alte `~/Desktop/newsapp`
+existiert noch als Backup und kann gelöscht werden.
 
 ## Wo wir stehen
 
@@ -15,8 +21,8 @@
 - Code: `pipeline/` – 11 Aufgaben umgesetzt, 46 Unit-Tests grün, Typecheck sauber
 - Läuft lokal: `cd pipeline && npm install && cp .env.example .env` (Gemini-Key eintragen) `&& npm run pipeline:run`
 - RSS-Abruf gegen echte Feeds verifiziert (7–9 Quellen liefern). GDELT aus der Umgebung nicht erreichbar (Code fängt es ab).
-- **Offen:** echter End-to-End-Lauf mit Gemini-Key (braucht der Nutzer), dann Branch mergen.
-- Hinweis: Es lief parallel eine zweite Claude-Sitzung am `pipeline/`-Code (Branch `chore/nahost-schwelle-konstante`, Refactor + `pipeline/src/demo.ts`). Branch-Stand morgen klären.
+- Demo ohne Key läuft: `npm run pipeline:demo` – zieht die echten Feeds von heute (DE/TR/Nahost kommen rein). Ohne Key gruppiert die Pipeline nur per Wortabgleich und macht dabei Fehler (paart teils Unzusammenhängendes) – Feinschliff offen.
+- **Offen:** echter End-to-End-Lauf mit Gemini-Key (braucht der Nutzer: aistudio.google.com/apikey), dann `npm run pipeline:run`.
 
 ### 3. Design-Mockup – IN ARBEIT
 - Datei: `docs/mockup/newsspur-mockup.html` (dieselbe wie das Artifact)
