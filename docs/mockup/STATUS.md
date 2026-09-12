@@ -69,13 +69,13 @@ existiert noch als Backup und kann gelöscht werden.
    installiert, OpenCLI-Browser-Erweiterung nicht verbunden) – deshalb zuerst
    Exa-Websuche als Ausweichlösung. Nachdem der Nutzer die OpenCLI-Erweiterung
    installiert und sich bei X eingeloggt hat (2026-09-13), funktioniert der
-   direkte X-Zugriff (siehe [[agent-reach-twitter-x]]) – das Iran-Zitat wurde
-   danach auf den echten Original-Tweet-Link umgestellt
-   (x.com/IRIMFA_SPOX/status/2039615242099933190). Die anderen beiden Belege
-   (CENTCOM-Pressestatement, Bellingcat-Zitat via BBC Verify) sind weiterhin
-   über Presseartikel verlinkt – korrekt so, da Ersteres ohnehin ein offizielles
-   Statement und kein X-Post war; das Bellingcat-Zitat könnte bei Bedarf noch
-   auf den Original-Tweet umgestellt werden.
+   direkte X-Zugriff (siehe [[agent-reach-twitter-x]]) – Iran- und Bellingcat-
+   Zitat wurden danach auf die echten Original-Tweet-Links umgestellt
+   (x.com/IRIMFA_SPOX/status/2039615242099933190 bzw.
+   x.com/Easybakeovensz/status/2039130094929613148 – echter Handle von Trevor
+   Ball, nicht der zunächst vermutete). Das CENTCOM-Statement bleibt bewusst
+   über den BBC-Artikel verlinkt – das war ohnehin ein offizielles
+   Pressestatement und kein X-Post.
    Mit isoliertem Headless-Chrome-Profil (kein echtes Nutzerprofil) als
    Screenshot geprüft; ein Kontrast-Bug im Dunkelmodus (Akteur-Chip unsichtbar,
    `--ink` ist im Dark-Theme hell) dabei gefunden und behoben.
