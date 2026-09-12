@@ -56,17 +56,28 @@ existiert noch als Backup und kann gelöscht werden.
 
 ## Nächste Schritte
 
-1. **"Wer sagt was"-Beispiel im Mockup** (in Arbeit, 2026-09-12): neue Detail-
-   Sektion mit Original-Statements von Präsidenten/Außenministern (z. B. USA
-   vs. Iran) zu einem Nahost-Beispielthema, recherchiert per agent-reach
-   (echte X/Twitter-Posts, keine bezahlte API, keine erfundenen Zitate),
-   jeweils mit Datum/Handle/Link belegt.
+1. **„Wer sagt was"-Beispiel im Mockup – ERLEDIGT (2026-09-12).** Neue Detail-
+   Sektion `wer_sagt_was` in `docs/mockup/newsspur-mockup.html`, gerendert
+   zwischen „Strittige Punkte" und „Zeitverlauf" (CSS-Klassen `.statements`/
+   `.stmt-*`). Dafür wurde die bisherige fiktive Platzhalter-Meldung
+   `nahost-chan-junis` durch ein reales, per Exa-Websuche recherchiertes
+   Ereignis ersetzt (jetzt `id: 'nahost-lamerd'`): der US-Raketenangriff auf
+   Lamerd/Iran am 28.2.2026, mit drei echten, verlinkten Original-Statements
+   (Iran-Außenamtssprecher Baghaei via X, CENTCOM-Sprecher Hawkins, unabhängiger
+   Waffenexperte Trevor Ball/Bellingcat via BBC Verify). Direkter X/Twitter-
+   Zugriff über agent-reach war nicht verfügbar (twitter-cli nicht installiert,
+   OpenCLI-Browser-Erweiterung nicht verbunden) – deshalb Exa-Websuche als
+   Ausweichlösung, Zitate/Daten/Links stammen aus verifizierbaren Presseartikeln
+   (BBC, The Hill, Breaking Defense, Press TV, AP), keine erfundenen Zitate.
+   Mit isoliertem Headless-Chrome-Profil (kein echtes Nutzerprofil) als
+   Screenshot geprüft; ein Kontrast-Bug im Dunkelmodus (Akteur-Chip unsichtbar,
+   `--ink` ist im Dark-Theme hell) dabei gefunden und behoben.
 2. **Bild-Kacheln als Vektor-Grafik** (Nutzer hat Weg B gewählt): pro Post ein bold Kiosk-Poster-Motiv im Schwarz/Weiß/Rot-Look
    - erdogan-berlin → Brandenburger Tor
    - stromsteuer → Strommast
    - tuerkei-inflation → Absturz-Kurve / ₺
    - ruestungsexporte → gestempelte Kiste
-   - nahost-chan-junis → bleibt bewusst ohne Bild
+   - nahost-lamerd → bleibt bewusst ohne Bild
    - Umsetzung: `POSTER`-Objekt mit Inline-SVG im Skript; in `card()` und `openDetail()` statt `thumb.classList.add('ph-'+…)` ein `insertAdjacentHTML('afterbegin', POSTER[s.bild])`; CSS `.ph-*` raus, `.thumb svg,.d-hero svg{display:block;width:100%;height:100%}` rein; `credit` → „Illustration: NEWSSPUR"
 3. Mockup final abnehmen
 4. Plan 2 (Automatisierung: GitHub Actions + Cloudflare + Push) planen

@@ -328,6 +328,25 @@
     line-height: 1.4; color: var(--ink-2); padding-left: 12px; border-left: 3px solid var(--red);
   }
 
+  .statements { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+  .statements li { padding: 12px 14px; border: 1px solid var(--line-soft); }
+  .stmt-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .stmt-akteur {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--paper); background: var(--ink); padding: 2px 6px;
+  }
+  .stmt-person { font-weight: 700; font-size: 12.5px; }
+  .stmt-zitat {
+    margin: 8px 0 0; font-family: var(--font-body); font-weight: 500; font-style: italic; font-size: 14.5px;
+    line-height: 1.45; color: var(--ink-2); padding-left: 12px; border-left: 3px solid var(--red);
+  }
+  .stmt-beleg {
+    margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .03em; color: var(--ink-3);
+  }
+  .stmt-beleg a { color: var(--red-ink); text-decoration: none; }
+  .stmt-beleg a:hover { text-decoration: underline; }
+
   .sources { list-style: none; margin: 0; padding: 0; }
   .sources li { border-bottom: 1px solid var(--line-soft); }
   .sources li:last-child { border-bottom: 0; }
@@ -515,30 +534,57 @@
       ]
     },
     {
-      id: 'nahost-chan-junis',
-      kat: { deutschland: 6, tuerkei: 14, nahost: 88 },
+      id: 'nahost-lamerd',
+      kat: { deutschland: 4, tuerkei: 2, nahost: 92 },
       bild: null,
-      schlagzeile: 'Berichte über Luftangriff bei Chan Yunis – Angaben zu Opfern gehen auseinander',
-      teaser: 'Mehrere Quellen melden eine Explosion im Süden des Gazastreifens. Zahl und Umstände der Opfer werden sehr unterschiedlich dargestellt.',
-      zeit: 'vor 1 Std',
+      schlagzeile: 'Iran nennt US-Raketenangriff auf Lamerd erneut „Kriegsverbrechen“ – Washington bestreitet Beteiligung',
+      teaser: 'Beim Angriff auf die südiranische Stadt Lamerd im Februar starben 21 Menschen. Iran macht die USA verantwortlich, das US-Zentralkommando bestreitet dies bis heute.',
+      zeit: 'vor 3 Std',
       quellen: [
-        { name: 'Al Jazeera', typ: 'staatsnah (Katar)', flag: true },
-        { name: 'Times of Israel', typ: 'Zeitung' },
-        { name: 'BBC Middle East', typ: 'öffentlich-rechtlich' },
-        { name: 'UN News', typ: 'offiziell' }
+        { name: 'Press TV', typ: 'staatlich (Iran)', flag: true },
+        { name: 'BBC Verify', typ: 'öffentlich-rechtlich' },
+        { name: 'The Hill', typ: 'Zeitung (USA)' },
+        { name: 'Breaking Defense', typ: 'Fachmedium (USA)' },
+        { name: 'Associated Press', typ: 'Agentur' }
       ],
       sicherheit: 'mittel',
-      zusammenfassung: 'In der Nacht gab es nahe Chan Yunis im Süden des Gazastreifens eine Explosion. Laut Al Jazeera wurden dabei mehrere Zivilistinnen und Zivilisten getötet. Die israelische Armee spricht laut Times of Israel von einem gezielten Schlag gegen einen Kommandeur. Unabhängig bestätigen lässt sich der Vorgang bislang nicht.',
+      zusammenfassung: 'Am 28. Februar 2026, dem ersten Tag des US-israelischen Angriffs auf Iran, schlugen Raketen in der südiranischen Stadt Lamerd ein und trafen eine Sporthalle sowie Wohngebiete. 21 Menschen starben, rund 140 wurden verletzt. Iran spricht von einem gezielten US-Angriff mit einer neuartigen Präzisionsrakete (PrSM) und wirft Washington ein Kriegsverbrechen vor. Das US-Zentralkommando (CENTCOM) bestreitet, Lamerd angegriffen zu haben, und macht eine iranische Rakete verantwortlich. Unabhängige Waffenexperten (u. a. BBC Verify, Bellingcat, Airwars) stufen die US-Version anhand von Video- und Trümmeranalysen als unwahrscheinlich ein.',
       fakten: [
-        { text: 'Nahe Chan Yunis gab es in der Nacht eine Explosion.', q: ['Al Jazeera', 'BBC Middle East', 'Times of Israel'] },
-        { text: 'Die israelische Armee bestätigt einen Einsatz in dem Gebiet.', q: ['Times of Israel', 'BBC Middle East'] },
-        { text: 'Die UN fordert eine unabhängige Untersuchung.', q: ['UN News'] }
+        { text: 'Am 28.2.2026 starben bei einem Raketenangriff auf Lamerd 21 Menschen, rund 140 wurden verletzt.', q: ['Press TV', 'Associated Press'] },
+        { text: 'CENTCOM bestätigte am 4.3.2026 in einem eigenen Beitrag den ersten Kampfeinsatz der PrSM-Rakete während der „Operation Epic Fury“ (ohne konkreten Zielort zu nennen).', q: ['Breaking Defense'] },
+        { text: 'Unabhängige Waffenexperten halten laut Video- und Trümmeranalyse eine US-PrSM für wahrscheinlicher als die von CENTCOM genannte iranische Hoveyzeh-Rakete.', q: ['BBC Verify', 'Associated Press'] }
       ],
       strittig: [
-        'Opferzahl: Al Jazeera nennt acht Tote, die israelische Armee (laut Times of Israel) spricht von einem getöteten Kombattanten.',
-        'Ziel des Angriffs: „Wohnhaus“ (Al Jazeera) gegenüber „Kommandozentrale“ (Times of Israel).'
+        'Verantwortung: Iran macht eine US-Rakete (PrSM) verantwortlich – CENTCOM bestreitet jeden Angriff auf Lamerd und nennt eine iranische Hoveyzeh-Rakete als Ursache.',
+        'Absicht: Iran spricht von einem gezielten Angriff auf Zivilisten – die USA betonen, grundsätzlich keine zivilen Ziele anzugreifen.'
       ],
-      hinweis: 'Angaben zu Opfern und Verantwortung unterscheiden sich je nach Quelle. NEWSSPUR nennt beide Darstellungen und wertet nicht.'
+      wer_sagt_was: [
+        {
+          akteur: 'Iran',
+          person: 'Außenministeriums-Sprecher Esmaeil Baghaei',
+          kanal: 'X-Post, zuerst berichtet 2.4.2026',
+          zitat: 'Die neue amerikanische PrSM-Präzisionsrakete, die am 28. Februar 2026 ihr Kampfdebüt gab, traf eine mit Jugendlichen gefüllte Sporthalle in Lamerd. Der Angriff tötete 21 Jungen und Mädchen. Das ist ein abscheuliches Kriegsverbrechen.',
+          beleg: 'The Hill, 2.4.2026',
+          url: 'https://thehill.com/policy/international/5814209-iran-accuses-us-missile-strike/'
+        },
+        {
+          akteur: 'USA',
+          person: 'CENTCOM-Sprecher Kapitän Tim Hawkins',
+          kanal: 'Offizielles Statement, 31.3.2026',
+          zitat: 'US-Streitkräfte haben am ersten Tag der „Operation Epic Fury“ zu keinem Zeitpunkt Ziele in Lamerd oder im Umkreis von 30 Meilen angegriffen. US-Streitkräfte greifen keine Zivilisten an – anders als das iranische Regime, das zivile Ziele in Nachbarländern mehr als 300 Mal angegriffen hat.',
+          beleg: 'BBC News, 3.4.2026',
+          url: 'https://www.bbc.co.uk/news/articles/c4gx8e1x5j3o'
+        },
+        {
+          akteur: 'Unabhängige Prüfung',
+          person: 'Waffenexperte Trevor Ball (Bellingcat)',
+          kanal: 'X-Post, zitiert von BBC Verify',
+          zitat: 'Die Länge des Flugkörpers auf dem Video passt deutlich eher zu einer PrSM als zu einer Hoveyzeh-Rakete.',
+          beleg: 'BBC News, 3.4.2026',
+          url: 'https://www.bbc.co.uk/news/articles/c4gx8e1x5j3o'
+        }
+      ],
+      hinweis: 'Wer für den Angriff auf Lamerd verantwortlich ist, bleibt zwischen Iran und den USA offiziell strittig. NEWSSPUR zeigt beide Positionen und die unabhängige Einordnung nebeneinander und wertet nicht.'
     },
     {
       id: 'stromsteuer',
@@ -731,6 +777,29 @@
       s.strittig.forEach((d) => { const li = el('li'); li.textContent = d; ul.appendChild(li); });
       panel.appendChild(ul);
       body.appendChild(panel);
+    }
+
+    if (s.wer_sagt_was && s.wer_sagt_was.length) {
+      body.appendChild(section('Wer sagt was', (sec, lab) => {
+        const note = el('span', 'note'); note.textContent = ' — Original-Statements der Beteiligten';
+        lab.appendChild(note);
+        const ul = el('ul', 'statements');
+        s.wer_sagt_was.forEach((w) => {
+          const li = el('li');
+          const head = el('div', 'stmt-head');
+          const akteur = el('span', 'stmt-akteur'); akteur.textContent = w.akteur; head.appendChild(akteur);
+          const person = el('span', 'stmt-person'); person.textContent = w.person; head.appendChild(person);
+          li.appendChild(head);
+          const z = el('p', 'stmt-zitat'); z.textContent = '„' + w.zitat + '“'; li.appendChild(z);
+          const beleg = el('div', 'stmt-beleg');
+          const kanal = el('span'); kanal.textContent = w.kanal; beleg.appendChild(kanal);
+          const a = el('a'); a.href = w.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Beleg: ' + w.beleg + ' ↗';
+          beleg.appendChild(a);
+          li.appendChild(beleg);
+          ul.appendChild(li);
+        });
+        sec.appendChild(ul);
+      }));
     }
 
     if (s.zeitverlauf && s.zeitverlauf.length) {
