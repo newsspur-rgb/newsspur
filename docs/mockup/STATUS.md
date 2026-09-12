@@ -63,12 +63,19 @@ existiert noch als Backup und kann gelöscht werden.
    `nahost-chan-junis` durch ein reales, per Exa-Websuche recherchiertes
    Ereignis ersetzt (jetzt `id: 'nahost-lamerd'`): der US-Raketenangriff auf
    Lamerd/Iran am 28.2.2026, mit drei echten, verlinkten Original-Statements
-   (Iran-Außenamtssprecher Baghaei via X, CENTCOM-Sprecher Hawkins, unabhängiger
+   (Iran-Außenamtssprecher Baqaei via X, CENTCOM-Sprecher Hawkins, unabhängiger
    Waffenexperte Trevor Ball/Bellingcat via BBC Verify). Direkter X/Twitter-
-   Zugriff über agent-reach war nicht verfügbar (twitter-cli nicht installiert,
-   OpenCLI-Browser-Erweiterung nicht verbunden) – deshalb Exa-Websuche als
-   Ausweichlösung, Zitate/Daten/Links stammen aus verifizierbaren Presseartikeln
-   (BBC, The Hill, Breaking Defense, Press TV, AP), keine erfundenen Zitate.
+   Zugriff über agent-reach war zunächst nicht verfügbar (twitter-cli nicht
+   installiert, OpenCLI-Browser-Erweiterung nicht verbunden) – deshalb zuerst
+   Exa-Websuche als Ausweichlösung. Nachdem der Nutzer die OpenCLI-Erweiterung
+   installiert und sich bei X eingeloggt hat (2026-09-13), funktioniert der
+   direkte X-Zugriff (siehe [[agent-reach-twitter-x]]) – das Iran-Zitat wurde
+   danach auf den echten Original-Tweet-Link umgestellt
+   (x.com/IRIMFA_SPOX/status/2039615242099933190). Die anderen beiden Belege
+   (CENTCOM-Pressestatement, Bellingcat-Zitat via BBC Verify) sind weiterhin
+   über Presseartikel verlinkt – korrekt so, da Ersteres ohnehin ein offizielles
+   Statement und kein X-Post war; das Bellingcat-Zitat könnte bei Bedarf noch
+   auf den Original-Tweet umgestellt werden.
    Mit isoliertem Headless-Chrome-Profil (kein echtes Nutzerprofil) als
    Screenshot geprüft; ein Kontrast-Bug im Dunkelmodus (Akteur-Chip unsichtbar,
    `--ink` ist im Dark-Theme hell) dabei gefunden und behoben.
