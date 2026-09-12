@@ -2,7 +2,7 @@ export interface GeminiClient {
   strukturierteAntwort(prompt: string, schema: object): Promise<unknown>;
 }
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent';
 
 export function erstelleGeminiClient(apiKey: string, fetchImpl: typeof fetch = fetch): GeminiClient {
   return {

@@ -1,6 +1,6 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-**Letzter Stand:** 2026-09-03 – Projekte getrennt
+**Letzter Stand:** 2026-09-12 – Pipeline-Echtlauf erfolgreich
 
 **Repo:** eigenständig unter `~/Desktop/newsspur` (Branch `main`). Früher im
 gemeinsamen `~/Desktop/newsapp` – der wurde am 2026-09-03 aufgeteilt:
@@ -22,7 +22,29 @@ existiert noch als Backup und kann gelöscht werden.
 - Läuft lokal: `cd pipeline && npm install && cp .env.example .env` (Gemini-Key eintragen) `&& npm run pipeline:run`
 - RSS-Abruf gegen echte Feeds verifiziert (7–9 Quellen liefern). GDELT aus der Umgebung nicht erreichbar (Code fängt es ab).
 - Demo ohne Key läuft: `npm run pipeline:demo` – zieht die echten Feeds von heute (DE/TR/Nahost kommen rein). Ohne Key gruppiert die Pipeline nur per Wortabgleich und macht dabei Fehler (paart teils Unzusammenhängendes) – Feinschliff offen.
-- **Offen:** echter End-to-End-Lauf mit Gemini-Key (braucht der Nutzer: aistudio.google.com/apikey), dann `npm run pipeline:run`.
+- **2026-09-12: Erster echter End-to-End-Lauf mit Gemini-Key erfolgreich.**
+  `npm run pipeline:run` in `pipeline/`: 264 Artikel gesammelt (9 RSS-Feeds,
+  GDELT liefert in dieser Umgebung 429/Netzwerkfehler – Fallback greift wie
+  vorgesehen), 235 verarbeitet, 12 Meldungen mit echter Gemini-Zusammenfassung
+  veröffentlicht, Rest wartet korrekt auf eine zweite unabhängige Quelle.
+  Nahost-Sonderregel griff sichtbar (z. B. "Huthi-Vormarsch im Jemen" mit
+  weniger Quellen aber hoher Nahost-Kategorie durchgelassen).
+  Dabei drei echte Bugs gefunden und behoben (Modelle waren von Google
+  inzwischen abgekündigt/umbenannt):
+  - `pipeline/src/cluster/embed.ts`: Modell `text-embedding-004` gibt 404 →
+    auf `gemini-embedding-001` umgestellt.
+  - Google-Free-Tier erlaubt nur 100 Embedding-Anfragen/Minute (zählt auch
+    innerhalb eines Batch-Aufrufs pro Text) → `embed.ts` batcht jetzt in
+    100er-Gruppen, wartet zwischen Batches und liest bei 429 die von Google
+    genannte `retryDelay` aus der Fehlerantwort statt blind zu raten.
+  - `pipeline/src/summarize/geminiClient.ts`: Modell `gemini-2.5-flash` ist
+    für neue Nutzer nicht mehr verfügbar (404, Google empfiehlt Nachfolger) →
+    auf `gemini-3.6-flash` umgestellt (unterstützt weiterhin `responseSchema`).
+  Tests entsprechend angepasst/ergänzt: jetzt 48 grün (vorher 46).
+  **Praktische Folge:** ein Pipeline-Lauf mit ~250 Artikeln dauert wegen der
+  Minutenlimit-Pausen jetzt 2–3 Minuten statt Sekunden – für einen
+  automatisierten Cron-Lauf (Plan 2) unproblematisch, für manuelles Testen
+  etwas Geduld nötig.
 
 ### 3. Design-Mockup – IN ARBEIT
 - Datei: `docs/mockup/newsspur-mockup.html` (dieselbe wie das Artifact)
@@ -32,14 +54,33 @@ existiert noch als Backup und kann gelöscht werden.
 - **Schrift:** Oswald (schmal, wuchtig, Kiosk) für Schlagzeilen/Masthead/Tabs; Hanken Grotesk Fließtext; IBM Plex Mono für Metadaten
 - Inhalt: 5 Beispiel-Meldungen, Kategorie-Tabs, Detail-Ansicht mit Fakten+Belegen / Strittige Punkte / Zeitverlauf / Medienschau / Quellenliste, „So arbeitet NEWSSPUR"-Sheet, Push-Sheet, Hell/Dunkel
 
-## Nächste Schritte (morgen)
+## Nächste Schritte
 
-1. **Bild-Kacheln als Vektor-Grafik** (Nutzer hat Weg B gewählt): pro Post ein bold Kiosk-Poster-Motiv im Schwarz/Weiß/Rot-Look
+1. **"Wer sagt was"-Beispiel im Mockup** (in Arbeit, 2026-09-12): neue Detail-
+   Sektion mit Original-Statements von Präsidenten/Außenministern (z. B. USA
+   vs. Iran) zu einem Nahost-Beispielthema, recherchiert per agent-reach
+   (echte X/Twitter-Posts, keine bezahlte API, keine erfundenen Zitate),
+   jeweils mit Datum/Handle/Link belegt.
+2. **Bild-Kacheln als Vektor-Grafik** (Nutzer hat Weg B gewählt): pro Post ein bold Kiosk-Poster-Motiv im Schwarz/Weiß/Rot-Look
    - erdogan-berlin → Brandenburger Tor
    - stromsteuer → Strommast
    - tuerkei-inflation → Absturz-Kurve / ₺
    - ruestungsexporte → gestempelte Kiste
    - nahost-chan-junis → bleibt bewusst ohne Bild
    - Umsetzung: `POSTER`-Objekt mit Inline-SVG im Skript; in `card()` und `openDetail()` statt `thumb.classList.add('ph-'+…)` ein `insertAdjacentHTML('afterbegin', POSTER[s.bild])`; CSS `.ph-*` raus, `.thumb svg,.d-hero svg{display:block;width:100%;height:100%}` rein; `credit` → „Illustration: NEWSSPUR"
-2. Mockup final abnehmen
-3. Zurück zur Pipeline: Plan 1 End-to-End-Lauf, dann Plan 2 (Automatisierung/Cloud) planen
+3. Mockup final abnehmen
+4. Plan 2 (Automatisierung: GitHub Actions + Cloudflare + Push) planen
+
+## Ideen/Backlog (noch nicht geplant, nur festgehalten – 2026-09-12)
+
+- Hochwertigeres Design mit passenden Animationen fürs Zusammenfassen der
+  Live-Meldungen
+- Durchgängige, sichtbare Quellenangaben (Original-Quelle + Link) bei jeder
+  Zusammenfassung/jedem Statement – journalistische Transparenz. Bewusst
+  **keine** Bilder von fremden Nachrichtenseiten übernehmen (Urheberrecht) –
+  deshalb eigene Vektor-Illustrationen statt echter Fotos (siehe Poster-Punkt oben)
+- Neues Feature: in Deutschland beschlossene und wieder aufgehobene/gekippte
+  Gesetze verfolgen (mögliche Gratis-Quelle: DIP – Dokumentations- und
+  Informationssystem für Parlamentarische Vorgänge des Bundestags, offene API)
+- Neues Feature: Zusammenfassungen von Bundestags-Reden/-Debatten (Gratis-
+  Quelle: Plenarprotokolle des Bundestags, öffentlich einsehbar)
