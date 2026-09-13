@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "newsspur",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-13",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "newsspur",
+      "database_id": "05b07341-c56c-4942-bd68-323d81131e35"
+    }
+  ]
+}
