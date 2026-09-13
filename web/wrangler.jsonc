@@ -3,6 +3,7 @@
   "name": "newsspur",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-13",
+  "workers_dev": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
@@ -12,6 +13,16 @@
       "binding": "DB",
       "database_name": "newsspur",
       "database_id": "05b07341-c56c-4942-bd68-323d81131e35"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "newsspur.de",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.newsspur.de",
+      "custom_domain": true
     }
   ]
 }
