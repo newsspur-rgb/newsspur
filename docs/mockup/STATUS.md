@@ -1,12 +1,47 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-**Letzter Stand:** 2026-09-12 – Pipeline-Echtlauf erfolgreich
+**Letzter Stand:** 2026-09-13 – Automatischer Motor läuft (Plan 2, Teil 1)
 
-**Repo:** eigenständig unter `~/Desktop/newsspur` (Branch `main`). Früher im
+**Repo:** jetzt zusätzlich **privat auf GitHub**: github.com/newsspur-rgb/newsspur
+(lokal weiterhin `~/Desktop/newsspur`, Branch `main`). Früher im
 gemeinsamen `~/Desktop/newsapp` – der wurde am 2026-09-03 aufgeteilt:
 NEWSSPUR → `~/Desktop/newsspur`, Bora-Chat → `~/Desktop/bora`,
 Kids-Channel → `~/Desktop/kids-channel`. Der alte `~/Desktop/newsapp`
 existiert noch als Backup und kann gelöscht werden.
+
+## Plan 2 (Automatisierung) – Teil 1 „Motor" ERLEDIGT (2026-09-13)
+
+- **GitHub Actions** (`.github/workflows/pipeline.yml`) lässt die Pipeline
+  jetzt automatisch alle 30 Minuten laufen (plus manueller Testlauf per
+  `gh workflow run pipeline.yml`). Repo ist **privat**, Zugangsdaten liegen
+  ausschließlich als verschlüsselte GitHub-Secrets vor
+  (`GEMINI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`,
+  `CLOUDFLARE_API_TOKEN`).
+- **Cloudflare D1** (Datenbank `newsspur`, EU-Zuständigkeit) ersetzt den
+  flüchtigen In-Memory-Store: `pipeline/src/store/d1Store.ts` implementiert
+  `ThemenStore` fetch-basiert gegen die D1-REST-API, Schema bewusst ein
+  JSON-Blob pro Thema (`pipeline/src/store/schema.sql`, Phase-1-YAGNI).
+  `cli.ts` nutzt D1 automatisch, wenn die drei Cloudflare-Variablen gesetzt
+  sind, sonst weiterhin In-Memory (lokales Testen unverändert möglich).
+- **Erster echter Cloud-Lauf verifiziert:** 242 Artikel gesammelt, 7 Meldungen
+  veröffentlicht, 214 warten auf zweite Quelle – direkt in D1 nachgeprüft
+  (`SELECT status, COUNT(*) ... GROUP BY status`).
+- **Bug gefunden + behoben:** Ein einzelner 503-Fehler von Gemini (kommt bei
+  Google gelegentlich vor) ließ bisher den **kompletten Lauf** abbrechen, auch
+  wenn andere Themen erfolgreich gewesen wären. `pipeline.ts` überspringt
+  jetzt nur das betroffene Thema (neues Feld `PipelineErgebnis.fehler`),
+  nächster 30-Minuten-Lauf versucht es erneut. 54 Tests grün (vorher 48).
+- Aus der (pausierten) Instagram-Recherche liegen `satori`/`@resvg/resvg-js`
+  + Google-Fonts bereits im Repo (`pipeline/assets/fonts/`), ungenutzt.
+- **GDELT weiterhin nicht erreichbar** – jetzt auch in GitHub Actions
+  (`TypeError: fetch failed`), nicht nur lokal. RSS allein liefert mit 242
+  Artikeln pro Lauf genug Material, daher kein Blocker; Ursache noch nicht
+  untersucht (evtl. IP-Sperre/Endpunkt-Änderung bei GDELT).
+
+**Wichtig für den Nutzer:** Die Datenbank füllt sich jetzt automatisch, aber
+es gibt noch **keine sichtbare Webseite** – das ist der nächste Plan (API via
+Cloudflare Workers + Frontend via Cloudflare Pages, basierend auf dem
+bestehenden Mockup `docs/mockup/newsspur-mockup.html`).
 
 ## Wo wir stehen
 
