@@ -1,7 +1,7 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-**Letzter Stand:** 2026-09-13 – NEWSSPUR ist live und öffentlich erreichbar:
-https://newsspur.newsspur.workers.dev
+**Letzter Stand:** 2026-09-13 – NEWSSPUR ist live unter der echten Domain:
+**https://newsspur.de** (Fallback weiterhin: https://newsspur.newsspur.workers.dev)
 
 **Repo:** jetzt zusätzlich **privat auf GitHub**: github.com/newsspur-rgb/newsspur
 (lokal weiterhin `~/Desktop/newsspur`, Branch `main`). Früher im
@@ -59,10 +59,23 @@ existiert noch als Backup und kann gelöscht werden.
 - Deploy bisher **manuell** (`cd web && npx wrangler deploy`) – nach jedem
   Pipeline- oder Frontend-Update von Hand nötig, noch nicht automatisiert.
 
-**Nächste Schritte:** eigene Domain (`newsspur.de` per DNS-Umstellung bei
-IONOS auf Cloudflare, Anleitung liegt bereit), danach Push-Benachrichtigungen,
-danach echte Medienschau/Zeitverlauf/„Wer sagt was"-Daten + Kiosk-Poster,
-sobald die Pipeline diese Felder liefert.
+## Eigene Domain ERLEDIGT (2026-09-13)
+
+`newsspur.de` läuft jetzt direkt auf der echten Webseite. Ablauf: Domain als
+Zone bei Cloudflare hinzugefügt (bestehende E-Mail-Einträge MX/TXT/CNAME
+automatisch übernommen), Nameserver bei IONOS auf `andy.ns.cloudflare.com` /
+`lola.ns.cloudflare.com` umgestellt (Umstellung war ungewöhnlich schnell,
+Minuten statt Stunden), alte IONOS-A/AAAA-Einträge für `newsspur.de` und
+`www` gelöscht (blockierten sonst die automatische Verknüpfung), dann
+`routes` mit `custom_domain: true` in `web/wrangler.jsonc` ergänzt und per
+`wrangler deploy` verknüpft – alles per Cloudflare-API/CLI, kein
+Dashboard-Geklicke nötig außer für den einmaligen DNS-Edit-Token
+(`CLOUDFLARE_DNS_TOKEN` in `~/api-keys.env`). `www.newsspur.de` läuft ebenso.
+`*.workers.dev`-Adresse bleibt als Fallback aktiv (`workers_dev: true`).
+
+**Nächste Schritte:** Push-Benachrichtigungen, danach echte Medienschau/
+Zeitverlauf/„Wer sagt was"-Daten + Kiosk-Poster, sobald die Pipeline diese
+Felder liefert. Automatischer Deploy bei jedem Push wäre ebenfalls noch offen.
 
 ## Wo wir stehen
 
