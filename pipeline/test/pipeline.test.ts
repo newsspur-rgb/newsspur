@@ -80,4 +80,45 @@ describe('pipelineLauf', () => {
     expect(ergebnis.veroeffentlicht).toBe(0);
     expect(await store.alle()).toHaveLength(0);
   });
+
+  it('ruft socialPoster nach erfolgreicher Veroeffentlichung auf', async () => {
+    const store = new SpeicherThemenStore();
+    const a1 = art({ id: 'a1', url: 'https://a.de/1', quelle: qA, titel: 'Erdogan trifft Kanzler in Berlin', teaser: 'Der tuerkische Praesident traf den Kanzler in Berlin.' });
+    const a2 = art({ id: 'a2', url: 'https://b.de/1', quelle: qB, titel: 'Erdogan in Berlin beim Kanzler', teaser: 'Treffen zwischen Erdogan und dem Kanzler in Berlin.' });
+    const gemini = fakeGemini({
+      schlagzeile: 'Erdogan trifft Kanzler in Berlin',
+      zusammenfassung: 'Der tuerkische Praesident traf den Bundeskanzler in Berlin.',
+      kategorieWerte: { deutschland: 90, tuerkei: 95, nahost: 5 },
+      wichtigkeit: 80, wichtigkeitBegruendung: 'Staatsbesuch',
+      fakten: [{ text: 'Erdogan traf den Kanzler in Berlin.', belegtDurch: ['zeit', 'tagesschau'] }],
+      strittigePunkte: [], sicherheit: 'hoch',
+    });
+    const socialPoster = vi.fn(async () => {});
+
+    const ergebnis = await pipelineLauf([a1, a2], { store, geminiClient: gemini, socialPoster });
+
+    expect(ergebnis.veroeffentlicht).toBe(1);
+    expect(socialPoster).toHaveBeenCalledTimes(1);
+  });
+
+  it('bricht die Pipeline nicht ab, wenn socialPoster fehlschlaegt', async () => {
+    const store = new SpeicherThemenStore();
+    const a1 = art({ id: 'a1', url: 'https://a.de/1', quelle: qA, titel: 'Erdogan trifft Kanzler in Berlin', teaser: 'Der tuerkische Praesident traf den Kanzler in Berlin.' });
+    const a2 = art({ id: 'a2', url: 'https://b.de/1', quelle: qB, titel: 'Erdogan in Berlin beim Kanzler', teaser: 'Treffen zwischen Erdogan und dem Kanzler in Berlin.' });
+    const gemini = fakeGemini({
+      schlagzeile: 'Erdogan trifft Kanzler in Berlin',
+      zusammenfassung: 'Der tuerkische Praesident traf den Bundeskanzler in Berlin.',
+      kategorieWerte: { deutschland: 90, tuerkei: 95, nahost: 5 },
+      wichtigkeit: 80, wichtigkeitBegruendung: 'Staatsbesuch',
+      fakten: [{ text: 'Erdogan traf den Kanzler in Berlin.', belegtDurch: ['zeit', 'tagesschau'] }],
+      strittigePunkte: [], sicherheit: 'hoch',
+    });
+    const socialPoster = vi.fn(async () => { throw new Error('Instagram-API antwortete mit Status 500'); });
+
+    const ergebnis = await pipelineLauf([a1, a2], { store, geminiClient: gemini, socialPoster });
+
+    expect(ergebnis.veroeffentlicht).toBe(1);
+    const alle = await store.alle();
+    expect(alle[0].status).toBe('veroeffentlicht');
+  });
 });

@@ -4,3 +4,9 @@ CREATE TABLE IF NOT EXISTS themen (
   aktualisiert TEXT NOT NULL,
   daten TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS karten (
+  thema_id TEXT PRIMARY KEY,
+  png_base64 TEXT NOT NULL,
+  erstellt TEXT NOT NULL
+);

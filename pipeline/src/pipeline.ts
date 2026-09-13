@@ -1,4 +1,4 @@
-import type { Artikel } from './types.js';
+import type { Artikel, Thema, ThemenZusammenfassung } from './types.js';
 import type { ThemenStore } from './store/store.js';
 import type { GeminiClient } from './summarize/geminiClient.js';
 import type { EmbedFn } from './cluster/embed.js';
@@ -8,11 +8,14 @@ import { themaZusammenfassen } from './summarize/summarize.js';
 import { faktenPruefen } from './verify/verify.js';
 import { nahostSonderregelPruefen } from './rules/nahostRegel.js';
 
+export type SocialPoster = (thema: Thema, zusammenfassung: ThemenZusammenfassung) => Promise<void>;
+
 export interface PipelineAbhaengigkeiten {
   store: ThemenStore;
   geminiClient: GeminiClient;
   embedFn?: EmbedFn;
   zeitfensterStunden?: number;
+  socialPoster?: SocialPoster;
 }
 
 export interface PipelineErgebnis {
@@ -80,6 +83,14 @@ export async function pipelineLauf(
 
     await deps.store.speichern({ thema, zusammenfassung: gepruefte, status: 'veroeffentlicht' });
     veroeffentlicht++;
+
+    if (deps.socialPoster) {
+      try {
+        await deps.socialPoster(thema, gepruefte);
+      } catch (fehlerUrsache) {
+        console.warn(`Social-Posting fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
+      }
+    }
   }
 
   return { verarbeitet: zuVerarbeiten.length, veroeffentlicht, zurueckgehalten, fehler };

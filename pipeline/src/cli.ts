@@ -9,7 +9,11 @@ import { SpeicherThemenStore } from './store/memoryStore.js';
 import { D1ThemenStore } from './store/d1Store.js';
 import { erstelleGeminiClient } from './summarize/geminiClient.js';
 import { erstelleGeminiEmbedFn } from './cluster/embed.js';
-import { pipelineLauf } from './pipeline.js';
+import { pipelineLauf, type SocialPoster } from './pipeline.js';
+import { kartePngErzeugen } from './social/renderCard.js';
+import { erstelleD1KartenSpeicher } from './social/kartenSpeicher.js';
+import { erstelleInstagramClient } from './social/instagramClient.js';
+import { captionErstellen } from './social/caption.js';
 
 function erstelleStore(): ThemenStore {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN } = process.env;
@@ -19,6 +23,23 @@ function erstelleStore(): ThemenStore {
   }
   console.log('Speicher: In-Memory (nur dieser Lauf, keine Cloudflare-Zugangsdaten gefunden)');
   return new SpeicherThemenStore();
+}
+
+function erstelleSocialPoster(): SocialPoster | undefined {
+  const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN, INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID } = process.env;
+  if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_D1_DATABASE_ID || !CLOUDFLARE_API_TOKEN || !INSTAGRAM_ACCESS_TOKEN || !INSTAGRAM_BUSINESS_ACCOUNT_ID) {
+    console.log('Instagram-Posting: uebersprungen (keine Zugangsdaten gefunden)');
+    return undefined;
+  }
+  console.log('Instagram-Posting: aktiv');
+  const kartenSpeicher = erstelleD1KartenSpeicher(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN);
+  const instagram = erstelleInstagramClient(INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID);
+  return async (thema, zusammenfassung) => {
+    const png = await kartePngErzeugen(zusammenfassung);
+    await kartenSpeicher.speichern(thema.id, png);
+    const bildUrl = `https://newsspur.de/karte/${thema.id}.png`;
+    await instagram.bildPosten(bildUrl, captionErstellen(zusammenfassung));
+  };
 }
 
 async function sammle(
@@ -59,6 +80,7 @@ async function main(): Promise<void> {
     store,
     geminiClient: erstelleGeminiClient(apiKey),
     embedFn: erstelleGeminiEmbedFn(apiKey),
+    socialPoster: erstelleSocialPoster(),
   });
 
   console.log('Ergebnis:', ergebnis, '\n');
