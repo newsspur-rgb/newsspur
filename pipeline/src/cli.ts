@@ -4,10 +4,22 @@ import { feeds } from './sources/feeds.js';
 import { feedAbrufen } from './sources/fetchRss.js';
 import { gdeltAbrufen } from './sources/fetchGdelt.js';
 import { gdeltAbfragen } from './sources/gdeltAbfragen.js';
+import type { ThemenStore } from './store/store.js';
 import { SpeicherThemenStore } from './store/memoryStore.js';
+import { D1ThemenStore } from './store/d1Store.js';
 import { erstelleGeminiClient } from './summarize/geminiClient.js';
 import { erstelleGeminiEmbedFn } from './cluster/embed.js';
 import { pipelineLauf } from './pipeline.js';
+
+function erstelleStore(): ThemenStore {
+  const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN } = process.env;
+  if (CLOUDFLARE_ACCOUNT_ID && CLOUDFLARE_D1_DATABASE_ID && CLOUDFLARE_API_TOKEN) {
+    console.log('Speicher: Cloudflare D1 (dauerhaft)');
+    return new D1ThemenStore(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN);
+  }
+  console.log('Speicher: In-Memory (nur dieser Lauf, keine Cloudflare-Zugangsdaten gefunden)');
+  return new SpeicherThemenStore();
+}
 
 async function sammle(
   aufgaben: { name: string; lauf: () => Promise<Artikel[]> }[],
@@ -41,7 +53,8 @@ async function main(): Promise<void> {
   const alle = [...rss, ...gdelt];
   console.log(`\n${alle.length} Artikel gesammelt. Starte Pipeline ...\n`);
 
-  const store = new SpeicherThemenStore();
+  const store = erstelleStore();
+  const vorLauf = new Date().toISOString();
   const ergebnis = await pipelineLauf(alle, {
     store,
     geminiClient: erstelleGeminiClient(apiKey),
@@ -49,7 +62,7 @@ async function main(): Promise<void> {
   });
 
   console.log('Ergebnis:', ergebnis, '\n');
-  for (const t of await store.alle()) {
+  for (const t of await store.neuereAls(vorLauf)) {
     const titel = t.zusammenfassung?.schlagzeile ?? t.thema.artikel[0]?.titel ?? '(ohne Titel)';
     console.log(`[${t.status}] ${titel}`);
     if (t.zusammenfassung) {
