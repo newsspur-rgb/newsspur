@@ -1,6 +1,7 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-**Letzter Stand:** 2026-09-13 – Automatischer Motor läuft (Plan 2, Teil 1)
+**Letzter Stand:** 2026-09-13 – NEWSSPUR ist live und öffentlich erreichbar:
+https://newsspur.newsspur.workers.dev
 
 **Repo:** jetzt zusätzlich **privat auf GitHub**: github.com/newsspur-rgb/newsspur
 (lokal weiterhin `~/Desktop/newsspur`, Branch `main`). Früher im
@@ -38,10 +39,30 @@ existiert noch als Backup und kann gelöscht werden.
   Artikeln pro Lauf genug Material, daher kein Blocker; Ursache noch nicht
   untersucht (evtl. IP-Sperre/Endpunkt-Änderung bei GDELT).
 
-**Wichtig für den Nutzer:** Die Datenbank füllt sich jetzt automatisch, aber
-es gibt noch **keine sichtbare Webseite** – das ist der nächste Plan (API via
-Cloudflare Workers + Frontend via Cloudflare Pages, basierend auf dem
-bestehenden Mockup `docs/mockup/newsspur-mockup.html`).
+## Plan 2, Teil 2 „Webseite" ERLEDIGT (2026-09-13)
+
+- **Live:** https://newsspur.newsspur.workers.dev – zeigt echte, automatisch
+  erzeugte Meldungen, nicht mehr die Mockup-Beispiele.
+- Neuer Code in `web/`: ein einzelner Cloudflare Worker mit Static Assets
+  (aktueller Cloudflare-Standard, ersetzt getrennt Pages+Workers) liefert die
+  Seite aus UND beantwortet `/api/themen` per nativem D1-Binding.
+  `web/src/aufbereiten.ts` löst Quellen-IDs zu Klarnamen auf, dedupliziert
+  Quellen, markiert staatsnahe mit Flag.
+- **Bewusst nicht vorgetäuscht:** Medienschau, Zeitverlauf, „Wer sagt was",
+  Poster-Bilder erzeugt die echte Pipeline nicht – diese Mockup-Felder
+  bleiben leer/ausgeblendet, bis es echte Daten dafür gibt.
+- **Bug gefunden + behoben:** Dem Mockup fehlten DOCTYPE/`<html>`/`<head>`/
+  `<meta charset="utf-8">` komplett – beim lokalen Öffnen als Datei fiel das
+  nicht auf, auf der echten Domain wurden Umlaute als Mojibake angezeigt
+  („TÃ¼RKEI" statt „TÜRKIYE"). Jetzt korrekt, dabei auch gleich „Türkei" →
+  „Türkiye" (aktuelle offizielle Bezeichnung) geändert.
+- Deploy bisher **manuell** (`cd web && npx wrangler deploy`) – nach jedem
+  Pipeline- oder Frontend-Update von Hand nötig, noch nicht automatisiert.
+
+**Nächste Schritte:** eigene Domain (`newsspur.de` per DNS-Umstellung bei
+IONOS auf Cloudflare, Anleitung liegt bereit), danach Push-Benachrichtigungen,
+danach echte Medienschau/Zeitverlauf/„Wer sagt was"-Daten + Kiosk-Poster,
+sobald die Pipeline diese Felder liefert.
 
 ## Wo wir stehen
 
