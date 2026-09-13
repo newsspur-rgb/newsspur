@@ -19,6 +19,7 @@ export interface PipelineErgebnis {
   verarbeitet: number;
   veroeffentlicht: number;
   zurueckgehalten: number;
+  fehler: number;
 }
 
 export async function pipelineLauf(
@@ -37,6 +38,7 @@ export async function pipelineLauf(
   const zuVerarbeiten = [...neueThemen, ...aktualisierteThemen];
   let veroeffentlicht = 0;
   let zurueckgehalten = 0;
+  let fehler = 0;
 
   for (const thema of zuVerarbeiten) {
     const unabhaengigkeit = unabhaengigkeitPruefen(thema);
@@ -46,7 +48,14 @@ export async function pipelineLauf(
       continue;
     }
 
-    const zusammenfassung = await themaZusammenfassen(thema, deps.geminiClient);
+    let zusammenfassung;
+    try {
+      zusammenfassung = await themaZusammenfassen(thema, deps.geminiClient);
+    } catch (fehlerUrsache) {
+      console.warn(`Thema ${thema.id} uebersprungen (Gemini-Fehler, naechster Lauf versucht es erneut):`, fehlerUrsache);
+      fehler++;
+      continue;
+    }
     const pruefung = faktenPruefen(zusammenfassung, thema);
     const gepruefte = { ...zusammenfassung, sicherheit: pruefung.angepassteSicherheit };
 
@@ -73,5 +82,5 @@ export async function pipelineLauf(
     veroeffentlicht++;
   }
 
-  return { verarbeitet: zuVerarbeiten.length, veroeffentlicht, zurueckgehalten };
+  return { verarbeitet: zuVerarbeiten.length, veroeffentlicht, zurueckgehalten, fehler };
 }

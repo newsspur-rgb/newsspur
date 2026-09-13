@@ -67,4 +67,17 @@ describe('pipelineLauf', () => {
     const alle = await store.alle();
     expect(alle[0].zusammenfassung?.sicherheit).toBe('niedrig');
   });
+
+  it('ueberspringt ein Thema bei einem Gemini-Fehler, statt den ganzen Lauf abzubrechen', async () => {
+    const store = new SpeicherThemenStore();
+    const a1 = art({ id: 'a1', url: 'https://a.de/1', quelle: qA, titel: 'Ereignis Y Bericht', teaser: 'Beschreibung Y ausfuehrlich' });
+    const a2 = art({ id: 'a2', url: 'https://b.de/1', quelle: qB, titel: 'Ereignis Y passiert Bericht', teaser: 'Beschreibung Y sehr ausfuehrlich' });
+    const gemini: GeminiClient = { strukturierteAntwort: vi.fn(async () => { throw new Error('Gemini antwortete mit Status 503'); }) };
+
+    const ergebnis = await pipelineLauf([a1, a2], { store, geminiClient: gemini });
+
+    expect(ergebnis.fehler).toBe(1);
+    expect(ergebnis.veroeffentlicht).toBe(0);
+    expect(await store.alle()).toHaveLength(0);
+  });
 });
