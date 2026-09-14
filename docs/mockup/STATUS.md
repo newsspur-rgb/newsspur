@@ -1,5 +1,33 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## Echte Push-Benachrichtigungen (2026-09-14)
+
+Die Glocken-Schaltfläche + das Einstellungs-Sheet aus dem Mockup waren rein
+kosmetisch (keine Funktion) – jetzt echt umgesetzt:
+- **Architektur:** Abo-Speicherung läuft über den Cloudflare Worker
+  (natives D1-Binding, neue Tabelle `push_abos`), das Versenden passiert aus
+  der Pipeline heraus (Node/GitHub Actions, `web-push`-Paket), direkt nach
+  jeder Veröffentlichung – neuer optionaler `pushBenachrichtiger`-Hook in
+  `pipeline.ts`, exakt nach dem Muster von `socialPoster` (Fehler pro Abo
+  werden nur geloggt, brechen nichts ab).
+- **Auslöse-Kriterien:** `wichtigkeit >= 70` als Basis-Schwelle,
+  „Nur Eilmeldungen"-Abos zusätzlich `sicherheit === 'hoch'` und
+  `wichtigkeit >= 90`, plus passendes Kategorie-Toggle. Beide Schwellen sind
+  grob geschätzt (noch keine echte Wichtigkeits-Verteilung aus Live-Läufen
+  vorhanden) – bei Bedarf leicht nachjustierbar in `pipeline/src/push/auswahl.ts`.
+  Bewusster Trade-off: keine harte "5 pro Tag"-Zähl-Tabelle, nur die hohe
+  Schwelle hält das Mockup-Versprechen näherungsweise ein (YAGNI, analog zur
+  Reaktionen-Entscheidung).
+- **iOS-Voraussetzung:** Web Push funktioniert auf dem iPhone nur, wenn
+  newsspur.de vorher über Safari-Teilen → „Zum Home-Bildschirm" installiert
+  und von dort geöffnet wurde. Dafür neu: `web/public/manifest.json`,
+  `web/public/icons/icon-192.png` + `icon-512.png` (per resvg aus einem
+  einfachen NEWSSPUR-Icon erzeugt), `web/public/sw.js` (Service Worker).
+- 79 Pipeline-Tests grün (vorher 66), 16 Web-Tests grün (vorher 11).
+- **Offen:** D1-Migration für `push_abos` auf die lebende Datenbank
+  anwenden, `wrangler deploy`, danach auf einem echten iPhone testen
+  (Home-Bildschirm-Installation → Aktivieren-Button im Glocken-Sheet).
+
 **Letzter Stand:** 2026-09-13 – NEWSSPUR ist live unter der echten Domain:
 **https://newsspur.de** (Fallback weiterhin: https://newsspur.newsspur.workers.dev)
 
