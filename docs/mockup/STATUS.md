@@ -16,20 +16,34 @@ behoben ist, oder ob die aktuelle Quote erst noch zurückgesetzt werden muss
 – nächsten automatischen Lauf abwarten, nicht manuell forcieren
 (siehe [[newsspur-pipeline-rate-limits]]).
 
-## Reel-Erzeugung – Teil 1 fertig, Teil 2-4 offen (2026-09-14)
+## Reel-Erzeugung – Code komplett fertig (Teil 1-4), noch nicht live (2026-09-14)
 
 Wachstumsrecherche (siehe Chat) zeigt: Feed-Fotos erreichen bei 0 Followern
 kaum jemanden, Reels sind der einzige wirksame Hebel. Plan (0 €, lokale
-Stimme statt bezahltem KI-Video) in 4 Teile aufgeteilt:
-- **Teil 1 ERLEDIGT:** `pipeline/src/reel/` erzeugt aus einer Zusammenfassung
-  ein fertiges 9:16-MP4 (Piper-TTS-Stimme, wortweise rot hervorgehobene
-  Untertitel im NEWSSPUR-Look, `ffmpeg`-Zusammensetzung). Lokal getestet,
-  sieht wie geplant aus. 12 neue Tests. Commit `359af68`.
-- **Teil 2-4 OFFEN:** Cloudflare-R2-Speicher fürs Video, Instagram-Reels-API
-  (anderer Ablauf als Foto-Posting: Container → Status-Polling → Publish),
-  Auswahl-Logik „max. 1 Reel/Tag" + Verdrahtung in die Pipeline. Plan-Details
-  siehe Chat-Verlauf vom 2026-09-14.
-- Instagram-Posting bleibt bis auf Weiteres pausiert (siehe unten).
+Stimme statt bezahltem KI-Video) in 4 Teile aufgeteilt – **alle 4 jetzt
+code-fertig und getestet** (108 Tests gesamt):
+- Teil 1: `pipeline/src/reel/` erzeugt aus einer Zusammenfassung ein 9:16-MP4
+  (Piper-TTS-Stimme, wortweise rot hervorgehobene Untertitel, ffmpeg).
+  Commit `359af68`.
+- Teil 2: R2-Speicher (`reelSpeicher.ts`, `/reel/<id>.mp4`-Route im Worker).
+  Commit `ef8dc7f`.
+- Teil 3: `instagramClient.reelPosten()` (Container → Status-Polling →
+  Publish, anderer Ablauf als Foto-Posting). Commit `8341a78`.
+- Teil 4: Auswahl-Logik „max. 1 Reel/Tag" (`reel/auswahl.ts`,
+  `reel_gesendet_heute`-Tabelle) + neuer `reelPoster`-Hook in `cli.ts`,
+  aktiv nur wenn Cloudflare- UND Instagram-Zugangsdaten UND
+  `PIPER_MODEL_PFAD` gesetzt sind. Commit `f4178dc`.
+
+**Noch offen, bevor es live gehen kann (bewusst nicht automatisiert):**
+1. Cloudflare R2 im Dashboard aktivieren (Nutzer, verlangt eine hinterlegte
+   Zahlungsmethode auch fürs kostenlose Kontingent), danach
+   `wrangler r2 bucket create newsspur-reels` + Deploy.
+2. Piper-Installation + Stimm-Download als neuer Schritt in
+   `.github/workflows/pipeline.yml` ergänzen – aktuell bewusst noch nicht
+   drin, weil es sonst bei jedem der 48 täglichen Läufe unnötig Zeit kostet,
+   solange Instagram eh pausiert ist.
+3. Die auskommentierten `INSTAGRAM_*`-Env-Zeilen in `pipeline.yml` wieder
+   einschalten (Nutzer-Entscheidung, aktuell weiterhin bewusst pausiert).
 
 ## Echte Push-Benachrichtigungen (2026-09-14)
 
