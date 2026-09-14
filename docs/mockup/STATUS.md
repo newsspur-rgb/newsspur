@@ -39,6 +39,25 @@ existiert noch als Backup und kann gelöscht werden.
   Artikeln pro Lauf genug Material, daher kein Blocker; Ursache noch nicht
   untersucht (evtl. IP-Sperre/Endpunkt-Änderung bei GDELT).
 
+## Instagram-Zugang dauerhaft verbunden (2026-09-13)
+
+Meta-App **„NEWSSPUR Automation"** (App-ID `4444054755854406`) angelegt, Facebook-Seite
+**„Newsspur"** erstellt und mit dem Instagram-Business-Konto `@newsspur` verknüpft
+(Business-Portfolio „NEWSSPUR" in business.facebook.com). Anwendungsfall „Nachrichten
+und Inhalte auf Instagram verwalten" → API-Setup mit **Facebook-Login** (nicht das
+default Instagram-Login-Setup, das andere Berechtigungsnamen hat) mit
+`instagram_basic` + `instagram_content_publish` ausgestattet. Daraus ein
+60-Tage-Seiten-Token erzeugt (Kurzzeit-Token aus Graph API Explorer → Long-Lived-User-Token
+per `oauth/access_token` → Page-Access-Token aus `/me/accounts`, dieser läuft nicht ab,
+solange die Seiten-Verknüpfung besteht) und die Instagram-Business-Account-ID
+(`17841425545062305`) ermittelt. Beides als GitHub-Secrets `INSTAGRAM_ACCESS_TOKEN` /
+`INSTAGRAM_BUSINESS_ACCOUNT_ID` hinterlegt und in `.github/workflows/pipeline.yml`
+verdrahtet – der 30-Minuten-Lauf postet damit ab sofort automatisch auf Instagram
+(vorher war der Code aus dem 13.9.-Commit zwar fertig, aber mangels Secrets inaktiv).
+**Offen:** Der Page-Token ist zwar langlebig, aber nicht ewig gültig (Meta kann ihn
+ungültig machen, z. B. bei Passwortänderung/Rechte-Entzug) – bei Fehlschlägen im
+Actions-Log ist eine Token-Erneuerung über denselben Weg nötig.
+
 ## Plan 2, Teil 2 „Webseite" ERLEDIGT (2026-09-13)
 
 - **Live:** https://newsspur.newsspur.workers.dev – zeigt echte, automatisch
