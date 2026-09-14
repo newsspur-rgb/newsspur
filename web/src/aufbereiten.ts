@@ -9,6 +9,7 @@ export interface ApiQuelle {
   name: string;
   typ: string;
   flag: boolean;
+  url: string;
 }
 
 export interface ApiThema {
@@ -22,6 +23,9 @@ export interface ApiThema {
   fakten: ApiFakt[];
   strittigePunkte: string[];
   quellen: ApiQuelle[];
+  bildUrl?: string;
+  bildQuelle?: string;
+  reaktionen?: Record<string, number>;
 }
 
 const TYP_LABEL: Record<string, string> = {
@@ -40,10 +44,16 @@ function quellenAufloesen(thema: VerarbeitetesThema['thema']): ApiQuelle[] {
         name: artikel.quelle.name,
         typ: TYP_LABEL[artikel.quelle.typ] ?? artikel.quelle.typ,
         flag: artikel.quelle.typ === 'staatsnah',
+        url: artikel.url,
       });
     }
   }
   return [...gesehen.values()];
+}
+
+function bildAufloesen(thema: VerarbeitetesThema['thema']): { bildUrl?: string; bildQuelle?: string } {
+  const artikel = thema.artikel.find((a) => a.bildUrl);
+  return { bildUrl: artikel?.bildUrl, bildQuelle: artikel?.quelle.name };
 }
 
 function faktenAufloesen(thema: VerarbeitetesThema): ApiFakt[] {
@@ -68,5 +78,6 @@ export function themaZuApi(thema: VerarbeitetesThema): ApiThema | null {
     fakten: faktenAufloesen(thema),
     strittigePunkte: thema.zusammenfassung.strittigePunkte,
     quellen: quellenAufloesen(thema.thema),
+    ...bildAufloesen(thema.thema),
   };
 }

@@ -368,6 +368,21 @@
   }
   .nahost-note::before { content: "\24D8"; color: var(--red-ink); font-size: 15px; line-height: 1.1; flex: none; }
 
+  .reaktionen { display: flex; gap: 10px; justify-content: center; margin: 22px 16px 0; }
+  .reaktion-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: none; border: 2px solid var(--line); border-radius: 8px;
+    font-size: 22px; padding: 8px 10px; cursor: pointer; color: var(--ink);
+  }
+  .reaktion-btn:disabled { opacity: .55; cursor: default; }
+  .reaktion-count { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }
+
+  .disclaimer {
+    margin: 18px 16px 0; padding: 13px 15px;
+    border: 2px solid var(--line);
+    font-size: 12.5px; line-height: 1.5; color: var(--ink-3);
+  }
+
   .credit-note {
     text-align: center; padding: 20px 12px 6px;
     font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3);
@@ -553,6 +568,42 @@
     return line;
   }
 
+  const REAKTIONEN = ['😍', '😢', '😂', '😱', '🤬'];
+
+  function reaktionsleiste(s) {
+    const wrap = el('div', 'reaktionen');
+    let schonReagiert = null;
+    try { schonReagiert = localStorage.getItem('reagiert-' + s.id); } catch (e) {}
+
+    REAKTIONEN.forEach((emoji) => {
+      const btn = el('button', 'reaktion-btn');
+      btn.type = 'button';
+      btn.disabled = !!schonReagiert;
+      const face = el('span'); face.textContent = emoji; btn.appendChild(face);
+      const count = el('span', 'reaktion-count');
+      count.textContent = String((s.reaktionen && s.reaktionen[emoji]) || 0);
+      btn.appendChild(count);
+
+      btn.addEventListener('click', async () => {
+        let bereits = null;
+        try { bereits = localStorage.getItem('reagiert-' + s.id); } catch (e) {}
+        if (bereits) return;
+        wrap.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        count.textContent = String(Number(count.textContent) + 1);
+        try { localStorage.setItem('reagiert-' + s.id, emoji); } catch (e) {}
+        try {
+          await fetch('/api/reaktion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ themaId: s.id, emoji }),
+          });
+        } catch (e) { console.error('Reaktion konnte nicht gespeichert werden:', e); }
+      });
+      wrap.appendChild(btn);
+    });
+    return wrap;
+  }
+
   function card(s) {
     const c = el('button', 'card');
     c.type = 'button';
@@ -560,9 +611,11 @@
     c.setAttribute('aria-label', s.schlagzeile);
 
     const thumb = el('div', 'thumb');
-    if (s.bild) {
-      thumb.classList.add('ph-' + s.bild);
-      const cr = el('span', 'credit'); cr.textContent = s.credit; thumb.appendChild(cr);
+    if (s.bildUrl) {
+      thumb.style.backgroundImage = 'url(' + s.bildUrl + ')';
+      thumb.style.backgroundSize = 'cover';
+      thumb.style.backgroundPosition = 'center';
+      const cr = el('span', 'credit'); cr.textContent = 'Foto: ' + (s.bildQuelle || 'Original-Quelle'); thumb.appendChild(cr);
     } else {
       thumb.classList.add('noimg');
       const sp = el('span'); sp.textContent = 'Kein Bild verfügbar'; thumb.appendChild(sp);
@@ -597,9 +650,11 @@
     body.appendChild(wrap);
 
     const hero = el('div', 'd-hero');
-    if (s.bild) {
-      hero.classList.add('ph-' + s.bild);
-      const cr = el('span', 'credit'); cr.textContent = s.credit; hero.appendChild(cr);
+    if (s.bildUrl) {
+      hero.style.backgroundImage = 'url(' + s.bildUrl + ')';
+      hero.style.backgroundSize = 'cover';
+      hero.style.backgroundPosition = 'center';
+      const cr = el('span', 'credit'); cr.textContent = 'Foto: ' + (s.bildQuelle || 'Original-Quelle'); hero.appendChild(cr);
     } else {
       hero.classList.add('noimg');
       const sp = el('span'); sp.textContent = 'Kein Bild verfügbar'; hero.appendChild(sp);
@@ -691,8 +746,7 @@
       const ul = el('ul', 'sources');
       s.quellen.forEach((q) => {
         const li = el('li');
-        const a = el('a'); a.href = '#'; a.setAttribute('aria-label', 'Zum Original bei ' + q.name);
-        a.addEventListener('click', (e) => e.preventDefault());
+        const a = el('a'); a.href = q.url; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('aria-label', 'Zum Original bei ' + q.name);
         const n = el('span', 'src-name'); n.textContent = q.name; a.appendChild(n);
         const t = el('span', 'src-typ' + (q.flag ? ' flag' : '')); t.textContent = q.typ; a.appendChild(t);
         const g = el('span', 'src-go'); g.textContent = '↗'; a.appendChild(g);
@@ -701,6 +755,12 @@
       });
       sec.appendChild(ul);
     }));
+
+    body.appendChild(reaktionsleiste(s));
+
+    const disclaimer = el('p', 'disclaimer');
+    disclaimer.textContent = 'NEWSSPUR fasst automatisch mehrere Quellen per KI zusammen. Bitte im Zweifel die Original-Quellen oben pruefen.';
+    body.appendChild(disclaimer);
 
     if (s.hinweis) {
       const n = el('div', 'nahost-note');
@@ -787,11 +847,13 @@
     return {
       id: t.id,
       kat: t.kategorieWerte,
-      bild: null,
+      bildUrl: t.bildUrl || null,
+      bildQuelle: t.bildQuelle || null,
       schlagzeile: t.schlagzeile,
       teaser: t.zusammenfassung,
       zeit: relativZeit(t.aktualisiert),
       quellen: t.quellen,
+      reaktionen: t.reaktionen || {},
       sicherheit: t.sicherheit,
       zusammenfassung: t.zusammenfassung,
       fakten: t.fakten.map((f) => ({ text: f.text, q: f.belegtDurch })),

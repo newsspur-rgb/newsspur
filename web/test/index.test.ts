@@ -29,3 +29,57 @@ describe('Worker /karte/:id.png', () => {
     expect(response.status).toBe(404);
   });
 });
+
+function mockeReaktionDb(opts: { themaExistiert: boolean; neueAnzahl: number }) {
+  return {
+    prepare: vi.fn((sql: string) => ({
+      bind: vi.fn(() => ({
+        first: vi.fn(async () => {
+          if (sql.includes('SELECT 1 FROM themen')) {
+            return opts.themaExistiert ? { '1': 1 } : null;
+          }
+          return { anzahl: opts.neueAnzahl };
+        }),
+      })),
+    })),
+  } as any;
+}
+
+describe('Worker POST /api/reaktion', () => {
+  it('zaehlt ein bekanntes Emoji fuer ein existierendes Thema hoch', async () => {
+    const env = { DB: mockeReaktionDb({ themaExistiert: true, neueAnzahl: 3 }), ASSETS: {} as any };
+    const response = await worker.fetch(
+      new Request('https://newsspur.de/api/reaktion', {
+        method: 'POST',
+        body: JSON.stringify({ themaId: 't1', emoji: '😱' }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ emoji: '😱', anzahl: 3 });
+  });
+
+  it('lehnt ein Emoji ausserhalb der Whitelist ab', async () => {
+    const env = { DB: mockeReaktionDb({ themaExistiert: true, neueAnzahl: 1 }), ASSETS: {} as any };
+    const response = await worker.fetch(
+      new Request('https://newsspur.de/api/reaktion', {
+        method: 'POST',
+        body: JSON.stringify({ themaId: 't1', emoji: '💩' }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('lehnt eine Reaktion auf ein unbekanntes Thema ab', async () => {
+    const env = { DB: mockeReaktionDb({ themaExistiert: false, neueAnzahl: 1 }), ASSETS: {} as any };
+    const response = await worker.fetch(
+      new Request('https://newsspur.de/api/reaktion', {
+        method: 'POST',
+        body: JSON.stringify({ themaId: 'unbekannt', emoji: '😱' }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(404);
+  });
+});

@@ -19,6 +19,8 @@ export interface Quelle {
 export interface Artikel {
   id: string;
   quelle: Quelle;
+  url: string;
+  bildUrl?: string;
 }
 
 export interface Fakt {
