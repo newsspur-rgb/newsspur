@@ -52,7 +52,6 @@ export async function buendeln(
   bestehendeThemen: Thema[],
   optionen: BuendelOptionen = {},
 ): Promise<{ neueThemen: Thema[]; aktualisierteThemen: Thema[] }> {
-  const schwelle = optionen.aehnlichkeitsSchwelle ?? (optionen.embedFn ? 0.82 : 0.25);
   const zeitfenster = optionen.zeitfensterStunden ?? 48;
   const jetzt = new Date().toISOString();
 
@@ -62,29 +61,39 @@ export async function buendeln(
 
   let cache: Map<string, number[]> | null = null;
   if (optionen.embedFn) {
-    cache = new Map();
-    // Bestehende Themen haben einen stabilen Vergleichstext (siehe themenText) - ein einmal
-    // berechnetes Embedding bleibt gueltig und wird nicht jeden Lauf neu angefragt.
-    const nochZuBerechnen: string[] = [];
-    for (const thema of bestehendeThemen) {
-      const text = themenText(thema);
-      if (thema.embedding) cache.set(text, thema.embedding);
-      else nochZuBerechnen.push(text);
-    }
-    const neueTexte = neueArtikel.map((a) => `${a.titel}. ${a.teaser}`);
-    nochZuBerechnen.push(...neueTexte);
+    try {
+      cache = new Map();
+      // Bestehende Themen haben einen stabilen Vergleichstext (siehe themenText) - ein einmal
+      // berechnetes Embedding bleibt gueltig und wird nicht jeden Lauf neu angefragt.
+      const nochZuBerechnen: string[] = [];
+      for (const thema of bestehendeThemen) {
+        const text = themenText(thema);
+        if (thema.embedding) cache.set(text, thema.embedding);
+        else nochZuBerechnen.push(text);
+      }
+      const neueTexte = neueArtikel.map((a) => `${a.titel}. ${a.teaser}`);
+      nochZuBerechnen.push(...neueTexte);
 
-    if (nochZuBerechnen.length > 0) {
-      const vektoren = await optionen.embedFn(nochZuBerechnen);
-      nochZuBerechnen.forEach((t, i) => cache!.set(t, vektoren[i]));
-    }
+      if (nochZuBerechnen.length > 0) {
+        const vektoren = await optionen.embedFn(nochZuBerechnen);
+        nochZuBerechnen.forEach((t, i) => cache!.set(t, vektoren[i]));
+      }
 
-    // Frisch berechnete Embeddings an den bestehenden Themen festhalten, damit der naechste
-    // Lauf sie wiederverwenden kann.
-    for (const thema of bestehendeThemen) {
-      if (!thema.embedding) thema.embedding = cache.get(themenText(thema));
+      // Frisch berechnete Embeddings an den bestehenden Themen festhalten, damit der naechste
+      // Lauf sie wiederverwenden kann.
+      for (const thema of bestehendeThemen) {
+        if (!thema.embedding) thema.embedding = cache.get(themenText(thema));
+      }
+    } catch (fehlerUrsache) {
+      // Ein Embedding-Ausfall (z. B. Tageskontingent erschoepft) soll nicht den ganzen
+      // Pipeline-Lauf abwuergen - fuer diesen Lauf auf den groben Wortabgleich zurueckfallen,
+      // Sammeln/Zusammenfassen/Veroeffentlichen laeuft trotzdem weiter.
+      console.warn('Embedding fehlgeschlagen, falle fuer diesen Lauf auf Wortabgleich zurueck:', fehlerUrsache);
+      cache = null;
     }
   }
+
+  const schwelle = optionen.aehnlichkeitsSchwelle ?? (cache ? 0.82 : 0.25);
 
   const aehnlichkeit = (textA: string, textB: string): number => {
     if (cache) {

@@ -93,6 +93,20 @@ describe('buendeln (mit embedFn)', () => {
     expect(angefragteTexte).not.toContain('Grundsteuer steigt. Neue Saetze im Bundesland.');
   });
 
+  it('faellt auf Wortabgleich zurueck, statt abzubrechen, wenn embedFn wirft (z.B. Rate-Limit)', async () => {
+    const embedFn = vi.fn(async () => {
+      throw new Error('Gemini-Embedding antwortete mit Status 429');
+    });
+    const a1 = art({ id: 'a1', url: 'https://a.de/1', titel: 'Erdogan trifft Kanzler in Berlin', teaser: 'Der tuerkische Praesident traf den Kanzler in Berlin.' });
+    const a2 = art({ id: 'a2', url: 'https://b.de/1', titel: 'Erdogan in Berlin beim Kanzler', teaser: 'Treffen zwischen Erdogan und dem Kanzler in Berlin.' });
+
+    const { neueThemen } = await buendeln([a1, a2], [], { embedFn });
+
+    expect(neueThemen).toHaveLength(1);
+    expect(neueThemen[0].artikel).toHaveLength(2);
+    expect(neueThemen[0].embedding).toBeUndefined();
+  });
+
   it('berechnet ein fehlendes Embedding fuer ein bestehendes Thema nach und haengt es an', async () => {
     const embedFn = async (texte: string[]) => texte.map(() => [0, 0, 1]);
     const jetzt = new Date().toISOString();
