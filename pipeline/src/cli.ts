@@ -9,7 +9,7 @@ import { SpeicherThemenStore } from './store/memoryStore.js';
 import { D1ThemenStore } from './store/d1Store.js';
 import { erstelleGeminiClient } from './summarize/geminiClient.js';
 import { erstelleGeminiEmbedFn } from './cluster/embed.js';
-import { pipelineLauf, type SocialPoster, type PushBenachrichtiger } from './pipeline.js';
+import { pipelineLauf, type SocialPoster, type PushBenachrichtiger, type ReelPoster } from './pipeline.js';
 import { kartePngErzeugen } from './social/renderCard.js';
 import { erstelleD1KartenSpeicher } from './social/kartenSpeicher.js';
 import { erstelleInstagramClient } from './social/instagramClient.js';
@@ -18,6 +18,12 @@ import { D1PushAbosStore } from './push/pushAbosStore.js';
 import { erstelleWebPushClient } from './push/webPushClient.js';
 import { abosFuerThema } from './push/auswahl.js';
 import type { PushAbo } from './push/types.js';
+import { reelErzeugen } from './reel/reelErstellen.js';
+import { erstelleR2ReelSpeicher } from './reel/reelSpeicher.js';
+import { erstelleD1ReelTagStore } from './reel/reelTagStore.js';
+import { sollReelWerden } from './reel/auswahl.js';
+
+const REEL_BUCKET_NAME = 'newsspur-reels';
 
 function erstelleStore(): ThemenStore {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN } = process.env;
@@ -77,6 +83,47 @@ function erstellePushBenachrichtiger(): PushBenachrichtiger | undefined {
   };
 }
 
+function erstelleReelPoster(): ReelPoster | undefined {
+  const {
+    CLOUDFLARE_ACCOUNT_ID,
+    CLOUDFLARE_D1_DATABASE_ID,
+    CLOUDFLARE_API_TOKEN,
+    INSTAGRAM_ACCESS_TOKEN,
+    INSTAGRAM_BUSINESS_ACCOUNT_ID,
+    PIPER_MODEL_PFAD,
+  } = process.env;
+  if (
+    !CLOUDFLARE_ACCOUNT_ID ||
+    !CLOUDFLARE_D1_DATABASE_ID ||
+    !CLOUDFLARE_API_TOKEN ||
+    !INSTAGRAM_ACCESS_TOKEN ||
+    !INSTAGRAM_BUSINESS_ACCOUNT_ID ||
+    !PIPER_MODEL_PFAD
+  ) {
+    console.log('Reel-Erzeugung: uebersprungen (keine Zugangsdaten/Stimme gefunden)');
+    return undefined;
+  }
+  console.log('Reel-Erzeugung: aktiv');
+  const reelSpeicher = erstelleR2ReelSpeicher(CLOUDFLARE_ACCOUNT_ID, REEL_BUCKET_NAME, CLOUDFLARE_API_TOKEN);
+  const reelTagStore = erstelleD1ReelTagStore(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN);
+  const instagram = erstelleInstagramClient(INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID);
+
+  return async (thema, zusammenfassung) => {
+    const heute = new Date().toISOString().slice(0, 10);
+    const bereitsGesendet = await reelTagStore.gesendetHeute(heute);
+    if (!sollReelWerden(zusammenfassung.wichtigkeit, bereitsGesendet)) return;
+
+    console.log(`Reel-Erzeugung: erstelle Reel fuer "${zusammenfassung.schlagzeile}"`);
+    const videoPfad = await reelErzeugen(zusammenfassung, PIPER_MODEL_PFAD);
+    await reelSpeicher.speichern(`${thema.id}.mp4`, videoPfad);
+    await reelTagStore.markieren(heute, thema.id);
+
+    const quellArtikel = thema.artikel.find((a) => a.bildUrl) ?? thema.artikel[0];
+    const reelUrl = `https://newsspur.de/reel/${thema.id}.mp4`;
+    await instagram.reelPosten(reelUrl, captionErstellen(zusammenfassung, quellArtikel.url));
+  };
+}
+
 async function sammle(
   aufgaben: { name: string; lauf: () => Promise<Artikel[]> }[],
 ): Promise<Artikel[]> {
@@ -117,6 +164,7 @@ async function main(): Promise<void> {
     embedFn: erstelleGeminiEmbedFn(apiKey),
     socialPoster: erstelleSocialPoster(),
     pushBenachrichtiger: erstellePushBenachrichtiger(),
+    reelPoster: erstelleReelPoster(),
   });
 
   console.log('Ergebnis:', ergebnis, '\n');

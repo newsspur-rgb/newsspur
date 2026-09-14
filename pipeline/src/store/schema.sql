@@ -28,3 +28,8 @@ CREATE TABLE IF NOT EXISTS push_abos (
   nur_eilmeldungen INTEGER NOT NULL DEFAULT 0,
   erstellt TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS reel_gesendet_heute (
+  datum TEXT PRIMARY KEY,
+  thema_id TEXT NOT NULL
+);

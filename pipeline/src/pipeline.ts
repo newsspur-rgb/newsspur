@@ -10,6 +10,7 @@ import { nahostSonderregelPruefen } from './rules/nahostRegel.js';
 
 export type SocialPoster = (thema: Thema, zusammenfassung: ThemenZusammenfassung) => Promise<void>;
 export type PushBenachrichtiger = (thema: Thema, zusammenfassung: ThemenZusammenfassung) => Promise<void>;
+export type ReelPoster = (thema: Thema, zusammenfassung: ThemenZusammenfassung) => Promise<void>;
 
 export interface PipelineAbhaengigkeiten {
   store: ThemenStore;
@@ -18,6 +19,7 @@ export interface PipelineAbhaengigkeiten {
   zeitfensterStunden?: number;
   socialPoster?: SocialPoster;
   pushBenachrichtiger?: PushBenachrichtiger;
+  reelPoster?: ReelPoster;
 }
 
 export interface PipelineErgebnis {
@@ -99,6 +101,14 @@ export async function pipelineLauf(
         await deps.pushBenachrichtiger(thema, gepruefte);
       } catch (fehlerUrsache) {
         console.warn(`Push-Benachrichtigung fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
+      }
+    }
+
+    if (deps.reelPoster) {
+      try {
+        await deps.reelPoster(thema, gepruefte);
+      } catch (fehlerUrsache) {
+        console.warn(`Reel-Erzeugung fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
       }
     }
   }
