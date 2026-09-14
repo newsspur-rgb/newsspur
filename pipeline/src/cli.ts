@@ -9,11 +9,15 @@ import { SpeicherThemenStore } from './store/memoryStore.js';
 import { D1ThemenStore } from './store/d1Store.js';
 import { erstelleGeminiClient } from './summarize/geminiClient.js';
 import { erstelleGeminiEmbedFn } from './cluster/embed.js';
-import { pipelineLauf, type SocialPoster } from './pipeline.js';
+import { pipelineLauf, type SocialPoster, type PushBenachrichtiger } from './pipeline.js';
 import { kartePngErzeugen } from './social/renderCard.js';
 import { erstelleD1KartenSpeicher } from './social/kartenSpeicher.js';
 import { erstelleInstagramClient } from './social/instagramClient.js';
 import { captionErstellen } from './social/caption.js';
+import { D1PushAbosStore } from './push/pushAbosStore.js';
+import { erstelleWebPushClient } from './push/webPushClient.js';
+import { abosFuerThema } from './push/auswahl.js';
+import type { PushAbo } from './push/types.js';
 
 function erstelleStore(): ThemenStore {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN } = process.env;
@@ -41,6 +45,35 @@ function erstelleSocialPoster(): SocialPoster | undefined {
     await kartenSpeicher.speichern(thema.id, png);
     const kartenBildUrl = `https://newsspur.de/karte/${thema.id}.png`;
     await instagram.bildPosten(kartenBildUrl, captionErstellen(zusammenfassung));
+  };
+}
+
+function erstellePushBenachrichtiger(): PushBenachrichtiger | undefined {
+  const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
+  if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_D1_DATABASE_ID || !CLOUDFLARE_API_TOKEN || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.log('Push-Benachrichtigungen: uebersprungen (keine Zugangsdaten gefunden)');
+    return undefined;
+  }
+  console.log('Push-Benachrichtigungen: aktiv');
+  const abosStore = new D1PushAbosStore(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN);
+  const webPush = erstelleWebPushClient(VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  let abosPromise: Promise<PushAbo[]> | undefined;
+
+  return async (_thema, zusammenfassung) => {
+    if (!abosPromise) abosPromise = abosStore.alle();
+    const treffer = abosFuerThema(await abosPromise, zusammenfassung);
+    if (treffer.length === 0) return;
+
+    console.log(`Push-Benachrichtigungen: sende an ${treffer.length} Abo(s) fuer "${zusammenfassung.schlagzeile}"`);
+    const payload = { titel: zusammenfassung.schlagzeile, text: zusammenfassung.zusammenfassung.slice(0, 120), url: 'https://newsspur.de' };
+    for (const abo of treffer) {
+      try {
+        const { abgelaufen } = await webPush.senden(abo, payload);
+        if (abgelaufen) await abosStore.entfernen(abo.endpoint);
+      } catch (fehlerUrsache) {
+        console.warn(`Push an ${abo.endpoint} fehlgeschlagen:`, fehlerUrsache);
+      }
+    }
   };
 }
 
@@ -83,6 +116,7 @@ async function main(): Promise<void> {
     geminiClient: erstelleGeminiClient(apiKey),
     embedFn: erstelleGeminiEmbedFn(apiKey),
     socialPoster: erstelleSocialPoster(),
+    pushBenachrichtiger: erstellePushBenachrichtiger(),
   });
 
   console.log('Ergebnis:', ergebnis, '\n');

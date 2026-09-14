@@ -17,3 +17,14 @@ CREATE TABLE IF NOT EXISTS reaktionen (
   anzahl INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (thema_id, emoji)
 );
+
+CREATE TABLE IF NOT EXISTS push_abos (
+  endpoint TEXT PRIMARY KEY,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  deutschland INTEGER NOT NULL DEFAULT 1,
+  tuerkei INTEGER NOT NULL DEFAULT 1,
+  nahost INTEGER NOT NULL DEFAULT 0,
+  nur_eilmeldungen INTEGER NOT NULL DEFAULT 0,
+  erstellt TEXT NOT NULL
+);

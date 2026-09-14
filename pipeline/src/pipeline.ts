@@ -9,6 +9,7 @@ import { faktenPruefen } from './verify/verify.js';
 import { nahostSonderregelPruefen } from './rules/nahostRegel.js';
 
 export type SocialPoster = (thema: Thema, zusammenfassung: ThemenZusammenfassung) => Promise<void>;
+export type PushBenachrichtiger = (thema: Thema, zusammenfassung: ThemenZusammenfassung) => Promise<void>;
 
 export interface PipelineAbhaengigkeiten {
   store: ThemenStore;
@@ -16,6 +17,7 @@ export interface PipelineAbhaengigkeiten {
   embedFn?: EmbedFn;
   zeitfensterStunden?: number;
   socialPoster?: SocialPoster;
+  pushBenachrichtiger?: PushBenachrichtiger;
 }
 
 export interface PipelineErgebnis {
@@ -89,6 +91,14 @@ export async function pipelineLauf(
         await deps.socialPoster(thema, gepruefte);
       } catch (fehlerUrsache) {
         console.warn(`Social-Posting fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
+      }
+    }
+
+    if (deps.pushBenachrichtiger) {
+      try {
+        await deps.pushBenachrichtiger(thema, gepruefte);
+      } catch (fehlerUrsache) {
+        console.warn(`Push-Benachrichtigung fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
       }
     }
   }
