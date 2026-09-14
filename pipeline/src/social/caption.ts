@@ -7,6 +7,10 @@ const HASHTAG: Record<Kategorie, string> = {
   nahost: '#Nahost',
 };
 
+// Immer dabei, unabhaengig von der Kategorie - sonst hat ein Post ganz ohne
+// Hashtags dagestanden, wenn keine der drei Kategorien die 40er-Schwelle riss.
+const BASIS_HASHTAGS = ['#NEWSSPUR', '#Nachrichten'];
+
 const ZUSAMMENFASSUNG_MAX_LAENGE = 300;
 
 function kuerzen(text: string, maxLaenge: number): string {
@@ -14,16 +18,17 @@ function kuerzen(text: string, maxLaenge: number): string {
   return text.slice(0, maxLaenge - 1).trimEnd() + '…';
 }
 
-/** Baut die Instagram-Caption aus Schlagzeile, gekuerzter Zusammenfassung und Kategorie-Hashtags. */
-export function captionErstellen(zusammenfassung: ThemenZusammenfassung): string {
-  const hashtags = relevanteKategorien(zusammenfassung.kategorieWerte)
-    .map((k) => HASHTAG[k])
-    .join(' ');
-  const teile = [
+/** Baut die Instagram-Caption aus Schlagzeile, gekuerzter Zusammenfassung, Quellenlink und Hashtags. */
+export function captionErstellen(zusammenfassung: ThemenZusammenfassung, quellUrl: string): string {
+  const kategorieHashtags = relevanteKategorien(zusammenfassung.kategorieWerte).map((k) => HASHTAG[k]);
+  const hashtags = [...BASIS_HASHTAGS, ...kategorieHashtags].join(' ');
+  return [
     zusammenfassung.schlagzeile,
     '',
     kuerzen(zusammenfassung.zusammenfassung, ZUSAMMENFASSUNG_MAX_LAENGE),
-  ];
-  if (hashtags) teile.push('', hashtags);
-  return teile.join('\n');
+    '',
+    `Quelle: ${quellUrl}`,
+    '',
+    hashtags,
+  ].join('\n');
 }

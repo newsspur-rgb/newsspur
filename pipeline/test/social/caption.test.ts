@@ -18,18 +18,28 @@ function beispiel(overrides: Partial<ThemenZusammenfassung> = {}): ThemenZusamme
 }
 
 describe('captionErstellen', () => {
-  it('enthaelt Schlagzeile, Zusammenfassung und Hashtags relevanter Kategorien', () => {
-    const caption = captionErstellen(beispiel());
+  it('enthaelt Schlagzeile, Zusammenfassung, Quellenlink und Hashtags relevanter Kategorien', () => {
+    const caption = captionErstellen(beispiel(), 'https://quelle.example/artikel-1');
     expect(caption).toContain('Eine Schlagzeile');
     expect(caption).toContain('Eine kurze Zusammenfassung.');
+    expect(caption).toContain('Quelle: https://quelle.example/artikel-1');
     expect(caption).toContain('#Deutschland');
     expect(caption).not.toContain('#Nahost');
   });
 
+  it('enthaelt immer die Basis-Hashtags, auch wenn keine Kategorie die Schwelle reisst', () => {
+    const caption = captionErstellen(
+      beispiel({ kategorieWerte: { deutschland: 10, tuerkei: 5, nahost: 0 } }),
+      'https://quelle.example/artikel-1',
+    );
+    expect(caption).toContain('#NEWSSPUR');
+    expect(caption).toContain('#Nachrichten');
+  });
+
   it('kuerzt eine sehr lange Zusammenfassung', () => {
     const lang = 'x'.repeat(500);
-    const caption = captionErstellen(beispiel({ zusammenfassung: lang }));
+    const caption = captionErstellen(beispiel({ zusammenfassung: lang }), 'https://quelle.example/artikel-1');
     expect(caption).toContain('…');
-    expect(caption.length).toBeLessThan(500 + 100);
+    expect(caption.length).toBeLessThan(500 + 200);
   });
 });
