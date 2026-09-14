@@ -6,6 +6,11 @@ const GEMINI_BATCH_EMBED_URL = `https://generativelanguage.googleapis.com/v1beta
 const BATCH_GROESSE = 100;
 const RETRY_VERSUCHE_MAX = 5;
 const STANDARD_WARTEZEIT_MS = 31_000;
+// Ein Batch von BATCH_GROESSE=100 schoepft das Minutenlimit bereits vollstaendig aus,
+// daher muss die Pause zwischen Batches laenger als das 60s-Zeitfenster sein - sonst
+// faellt der naechste Batch garantiert in dasselbe Fenster und bekommt sofort 429
+// (beobachtet: alle Laeufe mit >100 Artikeln scheiterten zuverlaessig mit 31s Pause).
+const ZWISCHEN_BATCHES_WARTEZEIT_MS = 65_000;
 
 function chunk<T>(werte: T[], groesse: number): T[][] {
   const gruppen: T[][] = [];
@@ -40,7 +45,7 @@ export function erstelleGeminiEmbedFn(apiKey: string, fetchImpl: typeof fetch = 
     const ergebnisse: number[][] = [];
     const gruppen = chunk(texte, BATCH_GROESSE);
     for (let i = 0; i < gruppen.length; i += 1) {
-      if (i > 0) await warte(STANDARD_WARTEZEIT_MS);
+      if (i > 0) await warte(ZWISCHEN_BATCHES_WARTEZEIT_MS);
       const antwort = await batchMitRateLimitRetry(() =>
         fetchImpl(`${GEMINI_BATCH_EMBED_URL}?key=${apiKey}`, {
           method: 'POST',
