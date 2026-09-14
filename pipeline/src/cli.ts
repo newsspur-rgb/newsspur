@@ -35,10 +35,12 @@ function erstelleSocialPoster(): SocialPoster | undefined {
   const kartenSpeicher = erstelleD1KartenSpeicher(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN);
   const instagram = erstelleInstagramClient(INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID);
   return async (thema, zusammenfassung) => {
-    const png = await kartePngErzeugen(zusammenfassung);
+    const quellArtikel = thema.artikel.find((a) => a.bildUrl);
+    const foto = quellArtikel?.bildUrl ? { url: quellArtikel.bildUrl, quelle: quellArtikel.quelle.name } : undefined;
+    const png = await kartePngErzeugen(zusammenfassung, foto);
     await kartenSpeicher.speichern(thema.id, png);
-    const bildUrl = `https://newsspur.de/karte/${thema.id}.png`;
-    await instagram.bildPosten(bildUrl, captionErstellen(zusammenfassung));
+    const kartenBildUrl = `https://newsspur.de/karte/${thema.id}.png`;
+    await instagram.bildPosten(kartenBildUrl, captionErstellen(zusammenfassung));
   };
 }
 

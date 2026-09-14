@@ -39,6 +39,35 @@ existiert noch als Backup und kann gelöscht werden.
   Artikeln pro Lauf genug Material, daher kein Blocker; Ursache noch nicht
   untersucht (evtl. IP-Sperre/Endpunkt-Änderung bei GDELT).
 
+## Echte Fotos, Quellenlinks, Disclaimer + Reaktionen (2026-09-14)
+
+Auf Nutzer-Vorbildern (Boulevard-Instagram-Post mit Foto, News-App „DU" mit
+Scroll-Artikel: Foto, Quelle+Link, Reaktions-Emojis, Disclaimer) basierend
+umgesetzt:
+- **Web (newsspur.de):** `bildUrl`/`url` pro Artikel wurden von der Pipeline
+  zwar schon immer gesammelt, aber nie weitergereicht – jetzt zeigt die
+  Detail- und Karten-Ansicht das echte Quellfoto (`web/src/aufbereiten.ts`,
+  `web/public/index.html`) statt Farbverlauf-Platzhalter, und die
+  „Alle Quellen"-Links sind jetzt echt anklickbar statt tot (`href='#'`).
+- **Disclaimer:** statischer Hinweistext in der Detail-Ansicht (KI-Charakter,
+  im Zweifel Original-Quellen prüfen).
+- **Reaktions-Leiste:** neue Tabelle `reaktionen` in D1, neue Route
+  `POST /api/reaktion` (`web/src/index.ts`), 5 Emoji-Buttons in der
+  Detail-Ansicht. Bewusster Trade-off: nur clientseitiger Schutz vor
+  Mehrfach-Klicks (`localStorage`), kein Server-Login/Captcha – Zähler sind
+  ein kosmetisches Stimmungsbild, kein belastbares Voting.
+  **Offen:** Migration muss einmalig auf die lebende D1-Datenbank
+  angewendet werden (`wrangler d1 execute newsspur --remote ...`), bevor die
+  Reaktionen live funktionieren.
+- **Instagram-Karte:** `renderCard.ts` bekommt bei vorhandenem Quellfoto ein
+  Foto-Layout (Foto oben, Schlagzeile darunter, Credit-Zeile „Foto: <Quelle>");
+  jeder Ladefehler (404/Timeout) fällt automatisch auf die bisherige
+  reine Text-Karte zurück, kein Abbruch. 66 Tests grün (vorher 64).
+- **Bewusst zurückgestellt** (keine generische Datenquelle in RSS/GDELT):
+  automatisch generierte Balkendiagramme (z. B. Wahlergebnisse) und
+  eingebettetes Video aus der Quelle. Als Backlog-Idee vermerkt, falls
+  später eine strukturierte Quelle dafür gefunden wird.
+
 ## Instagram-Zugang dauerhaft verbunden (2026-09-13)
 
 Meta-App **„NEWSSPUR Automation"** (App-ID `4444054755854406`) angelegt, Facebook-Seite

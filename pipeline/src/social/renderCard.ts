@@ -42,6 +42,102 @@ function headlineGroesse(schlagzeile: string): number {
   return 44;
 }
 
+function headerZeile(kategorien: Kategorie[]) {
+  return {
+    type: 'div',
+    props: {
+      style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+      children: [
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', flexDirection: 'column' },
+            children: [
+              {
+                type: 'span',
+                props: {
+                  style: { fontFamily: 'Oswald', fontWeight: 700, fontSize: 44, color: WEISS, letterSpacing: -1 },
+                  children: 'NEWSSPUR',
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    marginTop: 8,
+                    backgroundColor: ROT,
+                    color: WEISS,
+                    fontFamily: 'Hanken Grotesk',
+                    fontWeight: 600,
+                    fontSize: 15,
+                    padding: '4px 12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                  },
+                  children: 'Kein Blatt vor dem Mund',
+                },
+              },
+            ],
+          },
+        },
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', flexDirection: 'row', gap: 8 },
+            children: kategorien.map((k) => ({
+              type: 'div',
+              props: {
+                style: {
+                  display: 'flex',
+                  border: `2px solid ${WEISS}`,
+                  color: WEISS,
+                  fontFamily: 'Hanken Grotesk',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  padding: '6px 14px',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                },
+                children: KATEGORIE_LABEL[k],
+              },
+            })),
+          },
+        },
+      ],
+    },
+  };
+}
+
+function fusszeile(links: string, rechts: string) {
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderTop: '2px solid #333',
+        paddingTop: 20,
+      },
+      children: [links, rechts].map((text) => ({
+        type: 'span',
+        props: {
+          style: {
+            fontFamily: 'Hanken Grotesk',
+            fontWeight: 600,
+            fontSize: 15,
+            color: GRAU,
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+          },
+          children: text,
+        },
+      })),
+    },
+  };
+}
+
 function karteElement(zusammenfassung: ThemenZusammenfassung) {
   const kategorien = relevanteKategorien(zusammenfassung.kategorieWerte);
 
@@ -69,69 +165,7 @@ function karteElement(zusammenfassung: ThemenZusammenfassung) {
               padding: '56px 64px',
             },
             children: [
-              {
-                type: 'div',
-                props: {
-                  style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', flexDirection: 'column' },
-                        children: [
-                          {
-                            type: 'span',
-                            props: {
-                              style: { fontFamily: 'Oswald', fontWeight: 700, fontSize: 44, color: WEISS, letterSpacing: -1 },
-                              children: 'NEWSSPUR',
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                marginTop: 8,
-                                backgroundColor: ROT,
-                                color: WEISS,
-                                fontFamily: 'Hanken Grotesk',
-                                fontWeight: 600,
-                                fontSize: 15,
-                                padding: '4px 12px',
-                                textTransform: 'uppercase',
-                                letterSpacing: 1,
-                              },
-                              children: 'Kein Blatt vor dem Mund',
-                            },
-                          },
-                        ],
-                      },
-                    },
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', flexDirection: 'row', gap: 8 },
-                        children: kategorien.map((k) => ({
-                          type: 'div',
-                          props: {
-                            style: {
-                              display: 'flex',
-                              border: `2px solid ${WEISS}`,
-                              color: WEISS,
-                              fontFamily: 'Hanken Grotesk',
-                              fontWeight: 600,
-                              fontSize: 16,
-                              padding: '6px 14px',
-                              textTransform: 'uppercase',
-                              letterSpacing: 1,
-                            },
-                            children: KATEGORIE_LABEL[k],
-                          },
-                        })),
-                      },
-                    },
-                  ],
-                },
-              },
+              headerZeile(kategorien),
               {
                 type: 'div',
                 props: {
@@ -152,35 +186,7 @@ function karteElement(zusammenfassung: ThemenZusammenfassung) {
                   },
                 },
               },
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderTop: '2px solid #333',
-                    paddingTop: 20,
-                  },
-                  children: [
-                    {
-                      type: 'span',
-                      props: {
-                        style: {
-                          fontFamily: 'Hanken Grotesk',
-                          fontWeight: 600,
-                          fontSize: 16,
-                          color: GRAU,
-                          textTransform: 'uppercase',
-                          letterSpacing: 2,
-                        },
-                        children: 'Automatisch erstellt',
-                      },
-                    },
-                  ],
-                },
-              },
+              fusszeile('Automatisch erstellt', ''),
             ],
           },
         },
@@ -189,11 +195,88 @@ function karteElement(zusammenfassung: ThemenZusammenfassung) {
   };
 }
 
-/** Erzeugt eine 1080x1080-PNG-Textkarte fuer eine veroeffentlichte Meldung (Boulevard-Look). */
-export async function kartePngErzeugen(zusammenfassung: ThemenZusammenfassung): Promise<Buffer> {
+/** Wie karteElement, aber mit echtem Quellfoto oberhalb der Schlagzeile statt zentriertem Text. */
+function karteElementMitFoto(zusammenfassung: ThemenZusammenfassung, fotoDatenUrl: string, fotoQuelle: string) {
+  const kategorien = relevanteKategorien(zusammenfassung.kategorieWerte);
+
+  return {
+    type: 'div',
+    props: {
+      style: {
+        width: 1080,
+        height: 1080,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: SCHWARZ,
+        fontFamily: 'Hanken Grotesk',
+      },
+      children: [
+        { type: 'div', props: { style: { width: '100%', height: 14, backgroundColor: ROT } } },
+        {
+          type: 'div',
+          props: {
+            style: { flex: 1, display: 'flex', flexDirection: 'column', padding: '40px 64px 40px', gap: 28 },
+            children: [
+              headerZeile(kategorien),
+              { type: 'img', props: { src: fotoDatenUrl, width: 952, height: 460, style: { objectFit: 'cover', display: 'flex' } } },
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', flex: 1, alignItems: 'flex-end' },
+                  children: {
+                    type: 'span',
+                    props: {
+                      style: {
+                        fontFamily: 'Oswald',
+                        fontWeight: 700,
+                        color: WEISS,
+                        fontSize: headlineGroesse(zusammenfassung.schlagzeile),
+                        lineHeight: 1.05,
+                        letterSpacing: -1,
+                      },
+                      children: zusammenfassung.schlagzeile,
+                    },
+                  },
+                },
+              },
+              fusszeile('Foto: ' + fotoQuelle, 'Automatisch erstellt'),
+            ],
+          },
+        },
+      ],
+    },
+  };
+}
+
+/** Laedt ein Foto und wandelt es in eine Data-URL um; gibt bei jedem Fehler (Timeout, 404, ...) null zurueck. */
+async function fotoAlsDatenUrl(url: string, fetchImpl: typeof fetch): Promise<string | null> {
+  try {
+    const antwort = await fetchImpl(url, { signal: AbortSignal.timeout(5000) });
+    if (!antwort.ok) return null;
+    const contentType = antwort.headers.get('content-type') || 'image/jpeg';
+    const bytes = Buffer.from(await antwort.arrayBuffer());
+    return `data:${contentType};base64,${bytes.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Erzeugt eine 1080x1080-PNG-Karte fuer eine veroeffentlichte Meldung (Boulevard-Look).
+ * Mit echtem Quellfoto, wenn `foto` angegeben ist und sich laden laesst - sonst (oder bei
+ * jedem Lade-Fehler) die bisherige reine Text-Karte als Fallback.
+ */
+export async function kartePngErzeugen(
+  zusammenfassung: ThemenZusammenfassung,
+  foto?: { url: string; quelle: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<Buffer> {
   if (!fontCache) fontCache = await ladeFonts();
+  const fotoDatenUrl = foto ? await fotoAlsDatenUrl(foto.url, fetchImpl) : null;
+  const element =
+    fotoDatenUrl && foto ? karteElementMitFoto(zusammenfassung, fotoDatenUrl, foto.quelle) : karteElement(zusammenfassung);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svg = await satori(karteElement(zusammenfassung) as any, {
+  const svg = await satori(element as any, {
     width: 1080,
     height: 1080,
     fonts: fontCache,
