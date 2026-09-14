@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "pipeline:run": "tsx src/cli.ts",
-    "pipeline:demo": "tsx src/demo.ts"
+    "pipeline:demo": "tsx src/demo.ts",
+    "pipeline:reel-test": "tsx src/reelDemo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

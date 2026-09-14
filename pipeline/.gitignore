@@ -1,3 +1,7 @@
 node_modules
 .env
 dist
+demo.mp4
+demo.wav
+demo.png
+demo.ass
