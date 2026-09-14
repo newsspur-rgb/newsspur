@@ -4,6 +4,9 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-13",
   "workers_dev": true,
+  "vars": {
+    "VAPID_PUBLIC_KEY": "BEmk73DAP0FlV54vTcTUVaYuKEP20g9SmHlXLI7OwLrqivsYrQdiq3ffP01jKB-5uDuYu5xlS9WZKEYddj1y_Ug"
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"

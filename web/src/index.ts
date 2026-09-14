@@ -4,6 +4,7 @@ import type { VerarbeitetesThema } from './pipelineTypen.js';
 export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  VAPID_PUBLIC_KEY?: string;
 }
 
 const REAKTION_EMOJIS = ['😍', '😢', '😂', '😱', '🤬'];
@@ -85,6 +86,70 @@ async function reaktionAntwort(env: Env, request: Request): Promise<Response> {
   return Response.json({ emoji, anzahl: zeile?.anzahl ?? 1 });
 }
 
+function pushPublicKeyAntwort(env: Env): Response {
+  if (!env.VAPID_PUBLIC_KEY) return new Response('Push nicht konfiguriert', { status: 503 });
+  return Response.json({ publicKey: env.VAPID_PUBLIC_KEY });
+}
+
+interface PushAboBody {
+  endpoint?: unknown;
+  keys?: { p256dh?: unknown; auth?: unknown };
+  praeferenzen?: { deutschland?: unknown; tuerkei?: unknown; nahost?: unknown; nurEilmeldungen?: unknown };
+}
+
+async function pushAboSpeichern(env: Env, request: Request): Promise<Response> {
+  let body: PushAboBody;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Ungueltiger Body', { status: 400 });
+  }
+  const { endpoint, keys, praeferenzen } = body;
+  if (
+    typeof endpoint !== 'string' ||
+    typeof keys?.p256dh !== 'string' ||
+    typeof keys?.auth !== 'string' ||
+    !praeferenzen
+  ) {
+    return new Response('Ungueltiges Abo', { status: 400 });
+  }
+
+  await env.DB.prepare(
+    `INSERT INTO push_abos (endpoint, p256dh, auth, deutschland, tuerkei, nahost, nur_eilmeldungen, erstellt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(endpoint) DO UPDATE SET
+       p256dh = excluded.p256dh, auth = excluded.auth,
+       deutschland = excluded.deutschland, tuerkei = excluded.tuerkei, nahost = excluded.nahost,
+       nur_eilmeldungen = excluded.nur_eilmeldungen`,
+  )
+    .bind(
+      endpoint,
+      keys.p256dh,
+      keys.auth,
+      praeferenzen.deutschland ? 1 : 0,
+      praeferenzen.tuerkei ? 1 : 0,
+      praeferenzen.nahost ? 1 : 0,
+      praeferenzen.nurEilmeldungen ? 1 : 0,
+      new Date().toISOString(),
+    )
+    .run();
+
+  return Response.json({ ok: true });
+}
+
+async function pushAboLoeschen(env: Env, request: Request): Promise<Response> {
+  let body: { endpoint?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Ungueltiger Body', { status: 400 });
+  }
+  if (typeof body.endpoint !== 'string') return new Response('Ungueltiges Abo', { status: 400 });
+
+  await env.DB.prepare('DELETE FROM push_abos WHERE endpoint = ?').bind(body.endpoint).run();
+  return Response.json({ ok: true });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -93,6 +158,15 @@ export default {
     }
     if (url.pathname === '/api/reaktion' && request.method === 'POST') {
       return reaktionAntwort(env, request);
+    }
+    if (url.pathname === '/api/push/public-key') {
+      return pushPublicKeyAntwort(env);
+    }
+    if (url.pathname === '/api/push/abo' && request.method === 'POST') {
+      return pushAboSpeichern(env, request);
+    }
+    if (url.pathname === '/api/push/abo' && request.method === 'DELETE') {
+      return pushAboLoeschen(env, request);
     }
     const karteMatch = url.pathname.match(/^\/karte\/(.+)\.png$/);
     if (karteMatch) {

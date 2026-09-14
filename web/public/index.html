@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <title>NEWSSPUR</title>
 <meta name="description" content="Mockup der automatischen Nachrichten-App NEWSSPUR." />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<meta name="theme-color" content="#0B0B0B" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
@@ -434,6 +437,15 @@
   .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--ink); transition: transform .15s; }
   .sw:checked { background: var(--red); border-color: var(--red); }
   .sw:checked::after { transform: translateX(18px); background: var(--on-red); }
+
+  .push-btn {
+    width: 100%; margin-top: 18px; padding: 13px; border: none; cursor: pointer;
+    background: var(--red); color: var(--on-red);
+    font-family: var(--font-body); font-weight: 600; font-size: 14px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .push-btn:disabled { opacity: .5; cursor: default; }
+  .push-status { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); text-align: center; }
 </style>
 </head>
 <body>
@@ -506,14 +518,16 @@
       <h2>Benachrichtigungen</h2>
       <p class="sub">Push nur bei wichtigen, mehrfach bestätigten Meldungen – höchstens fünf pro Tag.</p>
       <div class="toggles">
-        <label class="toggle-row">Deutschland<input type="checkbox" class="sw" checked></label>
-        <label class="toggle-row">Türkiye<input type="checkbox" class="sw" checked></label>
-        <label class="toggle-row">Nahost-Konflikt<input type="checkbox" class="sw"></label>
+        <label class="toggle-row">Deutschland<input type="checkbox" class="sw" id="push-kat-de" checked></label>
+        <label class="toggle-row">Türkiye<input type="checkbox" class="sw" id="push-kat-tr" checked></label>
+        <label class="toggle-row">Nahost-Konflikt<input type="checkbox" class="sw" id="push-kat-na"></label>
         <label class="toggle-row">
           <span>Nur Eilmeldungen<small>Sehr hohe Wichtigkeit, Sicherheit „hoch“</small></span>
-          <input type="checkbox" class="sw">
+          <input type="checkbox" class="sw" id="push-eil">
         </label>
       </div>
+      <button type="button" class="push-btn" id="push-aktivieren">Benachrichtigungen aktivieren</button>
+      <p class="push-status" id="push-status" hidden></p>
     </aside>
 
   </div>
@@ -873,6 +887,103 @@
     }
     renderFeed(startBtn.dataset.tab);
   }
+
+  function urlBase64ZuUint8Array(base64) {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const base64Sicher = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const roh = atob(base64Sicher);
+    const bytes = new Uint8Array(roh.length);
+    for (let i = 0; i < roh.length; i++) bytes[i] = roh.charCodeAt(i);
+    return bytes;
+  }
+
+  function pushPraeferenzen() {
+    return {
+      deutschland: $('#push-kat-de').checked,
+      tuerkei: $('#push-kat-tr').checked,
+      nahost: $('#push-kat-na').checked,
+      nurEilmeldungen: $('#push-eil').checked,
+    };
+  }
+
+  function pushStatus(text) {
+    const status = $('#push-status');
+    status.hidden = !text;
+    status.textContent = text || '';
+  }
+
+  async function abonnementSpeichern(sub) {
+    await fetch('/api/push/abo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: sub.endpoint, keys: sub.toJSON().keys, praeferenzen: pushPraeferenzen() }),
+    });
+  }
+
+  async function pushButtonAktualisieren() {
+    const btn = $('#push-aktivieren');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      btn.disabled = true;
+      pushStatus('Auf diesem Gerät nicht verfügbar. Auf dem iPhone: Seite über „Teilen“ → „Zum Home-Bildschirm“ hinzufügen und von dort öffnen.');
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    btn.textContent = sub ? 'Benachrichtigungen deaktivieren' : 'Benachrichtigungen aktivieren';
+    pushStatus(sub ? 'Aktiv für dieses Gerät.' : '');
+  }
+
+  async function pushUmschalten() {
+    const btn = $('#push-aktivieren');
+    btn.disabled = true;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const bestehend = await reg.pushManager.getSubscription();
+      if (bestehend) {
+        await fetch('/api/push/abo', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: bestehend.endpoint }),
+        });
+        await bestehend.unsubscribe();
+        pushStatus('Deaktiviert.');
+      } else {
+        const erlaubnis = await Notification.requestPermission();
+        if (erlaubnis !== 'granted') {
+          pushStatus('Berechtigung nicht erteilt.');
+          return;
+        }
+        const antwort = await fetch('/api/push/public-key');
+        const { publicKey } = await antwort.json();
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ZuUint8Array(publicKey),
+        });
+        await abonnementSpeichern(sub);
+        pushStatus('Aktiv für dieses Gerät.');
+      }
+    } catch (e) {
+      console.error('Push-Umschaltung fehlgeschlagen:', e);
+      pushStatus('Etwas ist schiefgelaufen. Bitte erneut versuchen.');
+    } finally {
+      btn.disabled = false;
+      await pushButtonAktualisieren();
+    }
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch((e) => console.error('Service Worker Registrierung fehlgeschlagen:', e));
+  }
+  $('#push-aktivieren').addEventListener('click', pushUmschalten);
+  ['push-kat-de', 'push-kat-tr', 'push-kat-na', 'push-eil'].forEach((id) => {
+    $('#' + id).addEventListener('change', async () => {
+      if (!('serviceWorker' in navigator)) return;
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await abonnementSpeichern(sub);
+    });
+  });
+  pushButtonAktualisieren();
 
   ladeUndRendere();
 </script>

@@ -83,3 +83,74 @@ describe('Worker POST /api/reaktion', () => {
     expect(response.status).toBe(404);
   });
 });
+
+describe('Worker GET /api/push/public-key', () => {
+  it('liefert den konfigurierten VAPID-Public-Key', async () => {
+    const env = { DB: {} as any, ASSETS: {} as any, VAPID_PUBLIC_KEY: 'abc123' };
+    const response = await worker.fetch(new Request('https://newsspur.de/api/push/public-key'), env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ publicKey: 'abc123' });
+  });
+
+  it('liefert 503, wenn kein Public Key konfiguriert ist', async () => {
+    const env = { DB: {} as any, ASSETS: {} as any };
+    const response = await worker.fetch(new Request('https://newsspur.de/api/push/public-key'), env);
+    expect(response.status).toBe(503);
+  });
+});
+
+function mockeAboDb() {
+  const run = vi.fn(async () => ({}));
+  const bind = vi.fn(() => ({ run }));
+  const prepare = vi.fn(() => ({ bind }));
+  return { db: { prepare } as any, bind, run };
+}
+
+describe('Worker POST /api/push/abo', () => {
+  it('speichert ein gueltiges Abo per Upsert', async () => {
+    const { db, bind } = mockeAboDb();
+    const env = { DB: db, ASSETS: {} as any };
+    const response = await worker.fetch(
+      new Request('https://newsspur.de/api/push/abo', {
+        method: 'POST',
+        body: JSON.stringify({
+          endpoint: 'https://push.example/e1',
+          keys: { p256dh: 'p', auth: 'a' },
+          praeferenzen: { deutschland: true, tuerkei: false, nahost: false, nurEilmeldungen: false },
+        }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(200);
+    expect(bind).toHaveBeenCalledWith('https://push.example/e1', 'p', 'a', 1, 0, 0, 0, expect.any(String));
+  });
+
+  it('lehnt ein Abo ohne keys ab', async () => {
+    const { db } = mockeAboDb();
+    const env = { DB: db, ASSETS: {} as any };
+    const response = await worker.fetch(
+      new Request('https://newsspur.de/api/push/abo', {
+        method: 'POST',
+        body: JSON.stringify({ endpoint: 'https://push.example/e1', praeferenzen: {} }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(400);
+  });
+});
+
+describe('Worker DELETE /api/push/abo', () => {
+  it('loescht ein Abo per Endpoint', async () => {
+    const { db, bind } = mockeAboDb();
+    const env = { DB: db, ASSETS: {} as any };
+    const response = await worker.fetch(
+      new Request('https://newsspur.de/api/push/abo', {
+        method: 'DELETE',
+        body: JSON.stringify({ endpoint: 'https://push.example/e1' }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(200);
+    expect(bind).toHaveBeenCalledWith('https://push.example/e1');
+  });
+});
