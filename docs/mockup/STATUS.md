@@ -1,5 +1,36 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## Wichtiger Bugfix: Pipeline lief seit Stunden nicht mehr (2026-09-14, spät)
+
+Ursache für die anhaltenden `Gemini-Embedding antwortete mit Status 429`-
+Fehler (auch bei automatischen Läufen, nicht nur manuellen Tests)
+gefunden: `buendeln()` (`pipeline/src/cluster/cluster.ts`) hat bei **jedem**
+30-Minuten-Lauf alle wartenden Themen (~267 Stück) komplett neu embedded,
+obwohl sich deren Vergleichstext nie ändert. Das hat Googles Tageskontingent
+gesprengt. Themen bekommen jetzt ein persistentes `embedding`-Feld, das über
+den bestehenden D1-JSON-Blob mitgespeichert wird (keine Migration nötig) –
+ab jetzt werden nur noch neue Artikel embedded, bestehende Themen nutzen
+ihr gecachtes Embedding. 95 Tests grün. Commit `f8355b7`.
+**Noch zu beobachten:** ob damit auch die vermutete Tages-Quote-Erschöpfung
+behoben ist, oder ob die aktuelle Quote erst noch zurückgesetzt werden muss
+– nächsten automatischen Lauf abwarten, nicht manuell forcieren
+(siehe [[newsspur-pipeline-rate-limits]]).
+
+## Reel-Erzeugung – Teil 1 fertig, Teil 2-4 offen (2026-09-14)
+
+Wachstumsrecherche (siehe Chat) zeigt: Feed-Fotos erreichen bei 0 Followern
+kaum jemanden, Reels sind der einzige wirksame Hebel. Plan (0 €, lokale
+Stimme statt bezahltem KI-Video) in 4 Teile aufgeteilt:
+- **Teil 1 ERLEDIGT:** `pipeline/src/reel/` erzeugt aus einer Zusammenfassung
+  ein fertiges 9:16-MP4 (Piper-TTS-Stimme, wortweise rot hervorgehobene
+  Untertitel im NEWSSPUR-Look, `ffmpeg`-Zusammensetzung). Lokal getestet,
+  sieht wie geplant aus. 12 neue Tests. Commit `359af68`.
+- **Teil 2-4 OFFEN:** Cloudflare-R2-Speicher fürs Video, Instagram-Reels-API
+  (anderer Ablauf als Foto-Posting: Container → Status-Polling → Publish),
+  Auswahl-Logik „max. 1 Reel/Tag" + Verdrahtung in die Pipeline. Plan-Details
+  siehe Chat-Verlauf vom 2026-09-14.
+- Instagram-Posting bleibt bis auf Weiteres pausiert (siehe unten).
+
 ## Echte Push-Benachrichtigungen (2026-09-14)
 
 Die Glocken-Schaltfläche + das Einstellungs-Sheet aus dem Mockup waren rein
