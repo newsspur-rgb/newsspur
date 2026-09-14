@@ -24,9 +24,34 @@ kosmetisch (keine Funktion) – jetzt echt umgesetzt:
   `web/public/icons/icon-192.png` + `icon-512.png` (per resvg aus einem
   einfachen NEWSSPUR-Icon erzeugt), `web/public/sw.js` (Service Worker).
 - 79 Pipeline-Tests grün (vorher 66), 16 Web-Tests grün (vorher 11).
-- **Offen:** D1-Migration für `push_abos` auf die lebende Datenbank
-  anwenden, `wrangler deploy`, danach auf einem echten iPhone testen
-  (Home-Bildschirm-Installation → Aktivieren-Button im Glocken-Sheet).
+- **ERLEDIGT:** D1-Migration angewendet, `wrangler deploy` gelaufen, echtes
+  Abo vom Nutzer-iPhone in `push_abos` bestätigt (Endpoint bei
+  `web.push.apple.com`, Home-Bildschirm-Installation hat funktioniert).
+- **Nebenbei entdeckt + behoben:** `pipeline/src/cluster/embed.ts` hat seit
+  mind. 00:42 Uhr **jeden** Lauf (auch die automatischen) scheitern lassen –
+  ein Batch von 100 Embedding-Anfragen schöpft Googles Minutenlimit
+  komplett aus, die bisherige 31s-Pause zwischen Batches war kürzer als das
+  60s-Zeitfenster. Auf 65s erhöht (Commit `9876dd1`).
+- **Noch offen (für morgen):** Der End-to-End-Beweis "Push kommt beim
+  Nutzer an" steht noch aus – mehrere manuelle Testläufe direkt nacheinander
+  haben zusätzlich Gemini-/GDELT-Rate-Limits ausgelöst (429), daher bewusst
+  abgebrochen statt weiter zu forcieren. Nächster Schritt: einfach den
+  nächsten automatischen 30-Minuten-Lauf abwarten (kein Eingreifen nötig)
+  und dann per `gh run list --workflow=pipeline.yml` prüfen, ob ein Thema
+  veröffentlicht wurde, das die Push-Schwelle (`wichtigkeit >= 70`,
+  passende Kategorie) reißt – der Nutzer hat außerdem „Nur Eilmeldungen"
+  aktiviert (zusätzlich `wichtigkeit >= 90` + `sicherheit hoch` nötig),
+  ggf. für den Test lockern.
+
+## Nutzer-Auftrag für die nächste Session (2026-09-14, Sessionende)
+
+Nutzer möchte, dass die App **komplett fertiggestellt** wird – noch nicht
+weiter spezifiziert, was genau "fertig" bedeutet. Nächste Session damit
+beginnen, das zu konkretisieren (z. B. anhand der bestehenden
+"Nächste Schritte"/Backlog-Punkte weiter unten in diesem Dokument: echte
+Medienschau/Zeitverlauf/„Wer sagt was"-Daten sobald die Pipeline sie
+liefert, automatischer Deploy bei jedem Push, Bundestags-Feature-Ideen im
+Backlog) statt anzunehmen, welcher Teil gemeint ist.
 
 **Letzter Stand:** 2026-09-13 – NEWSSPUR ist live unter der echten Domain:
 **https://newsspur.de** (Fallback weiterhin: https://newsspur.newsspur.workers.dev)
