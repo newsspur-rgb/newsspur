@@ -11,10 +11,15 @@ gesprengt. Themen bekommen jetzt ein persistentes `embedding`-Feld, das über
 den bestehenden D1-JSON-Blob mitgespeichert wird (keine Migration nötig) –
 ab jetzt werden nur noch neue Artikel embedded, bestehende Themen nutzen
 ihr gecachtes Embedding. 95 Tests grün. Commit `f8355b7`.
-**Noch zu beobachten:** ob damit auch die vermutete Tages-Quote-Erschöpfung
-behoben ist, oder ob die aktuelle Quote erst noch zurückgesetzt werden muss
-– nächsten automatischen Lauf abwarten, nicht manuell forcieren
-(siehe [[newsspur-pipeline-rate-limits]]).
+**Update, noch später:** Läuft trotzdem weiter mit 429 gescheitert (15:38-
+16:37 Uhr) – sieht nach echter Tages-Kontingent-Sperre bei Google aus, kein
+Code-Fix kann das erzwingen. Deshalb zusätzlich Commit `31130f6`: ein
+fehlschlagender Embedding-Aufruf lässt `buendeln()` nicht mehr die ganze
+Pipeline abbrechen, sondern fällt für den Lauf auf groben Wortabgleich
+zurück – Sammeln/Zusammenfassen/Veröffentlichen läuft ab jetzt auch bei
+Kontingent-Ausfall weiter, nur ohne Embedding-Verfeinerung für diesen
+einen Lauf. 109 Tests grün. Nächsten automatischen Lauf abwarten, nicht
+manuell forcieren (siehe [[newsspur-pipeline-rate-limits]]).
 
 ## Reel-Erzeugung – Code komplett fertig (Teil 1-4), noch nicht live (2026-09-14)
 
