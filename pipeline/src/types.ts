@@ -30,6 +30,9 @@ export interface Thema {
   artikel: Artikel[];
   erstellt: string;
   aktualisiert: string;
+  /** Embedding-Vektor des stabilen Vergleichstexts (siehe cluster.ts themenText) - einmal
+   *  berechnet und dauerhaft gespeichert, damit nicht jeder Lauf alle wartenden Themen neu embedded. */
+  embedding?: number[];
 }
 
 export type Sicherheit = 'hoch' | 'mittel' | 'niedrig';

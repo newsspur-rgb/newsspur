@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { buendeln } from '../../src/cluster/cluster.js';
 import type { Artikel, Thema } from '../../src/types.js';
 
@@ -67,5 +67,44 @@ describe('buendeln (mit embedFn)', () => {
     expect(neueThemen).toHaveLength(2);
     const erdoganThema = neueThemen.find((t) => t.artikel.some((a) => a.id === 'a1'));
     expect(erdoganThema?.artikel.map((a) => a.id).sort()).toEqual(['a1', 'a2']);
+  });
+
+  it('speichert das Embedding an neu erstellten Themen', async () => {
+    const embedFn = async (texte: string[]) => texte.map(() => [1, 0, 0]);
+    const a1 = art({ id: 'a1', url: 'https://a.de/1', titel: 'Erdogan besucht Berlin', teaser: 'Treffen mit dem Kanzler.' });
+    const { neueThemen } = await buendeln([a1], [], { embedFn });
+    expect(neueThemen[0].embedding).toEqual([1, 0, 0]);
+  });
+
+  it('fragt embedFn nicht erneut fuer ein bestehendes Thema, das schon ein Embedding hat', async () => {
+    const embedFn = vi.fn(async (texte: string[]) => texte.map(() => [0, 1, 0]));
+    const jetzt = new Date().toISOString();
+    const bestehend: Thema = {
+      id: 'thema-1',
+      artikel: [art({ id: 'a1', url: 'https://a.de/1', titel: 'Grundsteuer steigt', teaser: 'Neue Saetze im Bundesland.' })],
+      erstellt: jetzt,
+      aktualisiert: jetzt,
+      embedding: [1, 0, 0],
+    };
+    const neu = art({ id: 'a2', url: 'https://b.de/1', titel: 'Ganz anderes Thema', teaser: 'Voellig unabhaengiger Inhalt.' });
+    await buendeln([neu], [bestehend], { embedFn });
+
+    const angefragteTexte = embedFn.mock.calls[0][0] as string[];
+    expect(angefragteTexte).not.toContain('Grundsteuer steigt. Neue Saetze im Bundesland.');
+  });
+
+  it('berechnet ein fehlendes Embedding fuer ein bestehendes Thema nach und haengt es an', async () => {
+    const embedFn = async (texte: string[]) => texte.map(() => [0, 0, 1]);
+    const jetzt = new Date().toISOString();
+    const bestehend: Thema = {
+      id: 'thema-1',
+      artikel: [art({ id: 'a1', url: 'https://a.de/1', titel: 'Altes Thema ohne Embedding', teaser: 'Noch nicht gecacht.' })],
+      erstellt: jetzt,
+      aktualisiert: jetzt,
+    };
+    const neu = art({ id: 'a2', url: 'https://b.de/1', titel: 'Anderes Thema', teaser: 'Unabhaengiger Inhalt.' });
+    await buendeln([neu], [bestehend], { embedFn });
+
+    expect(bestehend.embedding).toEqual([0, 0, 1]);
   });
 });

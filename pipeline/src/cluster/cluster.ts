@@ -62,12 +62,28 @@ export async function buendeln(
 
   let cache: Map<string, number[]> | null = null;
   if (optionen.embedFn) {
-    const texte = [
-      ...bestehendeThemen.map(themenText),
-      ...neueArtikel.map((a) => `${a.titel}. ${a.teaser}`),
-    ];
-    const vektoren = await optionen.embedFn(texte);
-    cache = new Map(texte.map((t, i) => [t, vektoren[i]]));
+    cache = new Map();
+    // Bestehende Themen haben einen stabilen Vergleichstext (siehe themenText) - ein einmal
+    // berechnetes Embedding bleibt gueltig und wird nicht jeden Lauf neu angefragt.
+    const nochZuBerechnen: string[] = [];
+    for (const thema of bestehendeThemen) {
+      const text = themenText(thema);
+      if (thema.embedding) cache.set(text, thema.embedding);
+      else nochZuBerechnen.push(text);
+    }
+    const neueTexte = neueArtikel.map((a) => `${a.titel}. ${a.teaser}`);
+    nochZuBerechnen.push(...neueTexte);
+
+    if (nochZuBerechnen.length > 0) {
+      const vektoren = await optionen.embedFn(nochZuBerechnen);
+      nochZuBerechnen.forEach((t, i) => cache!.set(t, vektoren[i]));
+    }
+
+    // Frisch berechnete Embeddings an den bestehenden Themen festhalten, damit der naechste
+    // Lauf sie wiederverwenden kann.
+    for (const thema of bestehendeThemen) {
+      if (!thema.embedding) thema.embedding = cache.get(themenText(thema));
+    }
   }
 
   const aehnlichkeit = (textA: string, textB: string): number => {
@@ -104,7 +120,13 @@ export async function buendeln(
         aktualisierteThemen.push(bestesThema);
       }
     } else {
-      neueThemen.push({ id: kurzeHashId(`${artikel.url}-${jetzt}`), artikel: [artikel], erstellt: jetzt, aktualisiert: jetzt });
+      neueThemen.push({
+        id: kurzeHashId(`${artikel.url}-${jetzt}`),
+        artikel: [artikel],
+        erstellt: jetzt,
+        aktualisiert: jetzt,
+        embedding: cache?.get(artikelText),
+      });
     }
   }
 
