@@ -18,6 +18,12 @@
       "database_id": "05b07341-c56c-4942-bd68-323d81131e35"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "REELS",
+      "bucket_name": "newsspur-reels"
+    }
+  ],
   "routes": [
     {
       "pattern": "newsspur.de",

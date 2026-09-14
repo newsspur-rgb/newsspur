@@ -14,7 +14,7 @@ function mockeDb(zeile: { png_base64: string } | null) {
 describe('Worker /karte/:id.png', () => {
   it('liefert ein PNG mit korrektem Content-Type, wenn die Karte existiert', async () => {
     const png = Buffer.from([1, 2, 3, 4]);
-    const env = { DB: mockeDb({ png_base64: png.toString('base64') }), ASSETS: {} as any };
+    const env = { DB: mockeDb({ png_base64: png.toString('base64') }), ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(new Request('https://newsspur.de/karte/abc123.png'), env);
 
     expect(response.status).toBe(200);
@@ -24,8 +24,30 @@ describe('Worker /karte/:id.png', () => {
   });
 
   it('liefert 404, wenn keine Karte fuer die ID existiert', async () => {
-    const env = { DB: mockeDb(null), ASSETS: {} as any };
+    const env = { DB: mockeDb(null), ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(new Request('https://newsspur.de/karte/unbekannt.png'), env);
+    expect(response.status).toBe(404);
+  });
+});
+
+function mockeReels(objekt: { body: ReadableStream } | null) {
+  return { get: vi.fn(async () => objekt) } as any;
+}
+
+describe('Worker /reel/:id.mp4', () => {
+  it('liefert das Video mit korrektem Content-Type, wenn es existiert', async () => {
+    const stream = new ReadableStream();
+    const env = { DB: {} as any, ASSETS: {} as any, REELS: mockeReels({ body: stream }) };
+    const response = await worker.fetch(new Request('https://newsspur.de/reel/abc123.mp4'), env);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('video/mp4');
+    expect(env.REELS.get).toHaveBeenCalledWith('abc123.mp4');
+  });
+
+  it('liefert 404, wenn kein Reel fuer die ID existiert', async () => {
+    const env = { DB: {} as any, ASSETS: {} as any, REELS: mockeReels(null) };
+    const response = await worker.fetch(new Request('https://newsspur.de/reel/unbekannt.mp4'), env);
     expect(response.status).toBe(404);
   });
 });
@@ -47,7 +69,7 @@ function mockeReaktionDb(opts: { themaExistiert: boolean; neueAnzahl: number }) 
 
 describe('Worker POST /api/reaktion', () => {
   it('zaehlt ein bekanntes Emoji fuer ein existierendes Thema hoch', async () => {
-    const env = { DB: mockeReaktionDb({ themaExistiert: true, neueAnzahl: 3 }), ASSETS: {} as any };
+    const env = { DB: mockeReaktionDb({ themaExistiert: true, neueAnzahl: 3 }), ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(
       new Request('https://newsspur.de/api/reaktion', {
         method: 'POST',
@@ -60,7 +82,7 @@ describe('Worker POST /api/reaktion', () => {
   });
 
   it('lehnt ein Emoji ausserhalb der Whitelist ab', async () => {
-    const env = { DB: mockeReaktionDb({ themaExistiert: true, neueAnzahl: 1 }), ASSETS: {} as any };
+    const env = { DB: mockeReaktionDb({ themaExistiert: true, neueAnzahl: 1 }), ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(
       new Request('https://newsspur.de/api/reaktion', {
         method: 'POST',
@@ -72,7 +94,7 @@ describe('Worker POST /api/reaktion', () => {
   });
 
   it('lehnt eine Reaktion auf ein unbekanntes Thema ab', async () => {
-    const env = { DB: mockeReaktionDb({ themaExistiert: false, neueAnzahl: 1 }), ASSETS: {} as any };
+    const env = { DB: mockeReaktionDb({ themaExistiert: false, neueAnzahl: 1 }), ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(
       new Request('https://newsspur.de/api/reaktion', {
         method: 'POST',
@@ -86,14 +108,14 @@ describe('Worker POST /api/reaktion', () => {
 
 describe('Worker GET /api/push/public-key', () => {
   it('liefert den konfigurierten VAPID-Public-Key', async () => {
-    const env = { DB: {} as any, ASSETS: {} as any, VAPID_PUBLIC_KEY: 'abc123' };
+    const env = { DB: {} as any, ASSETS: {} as any, REELS: {} as any, VAPID_PUBLIC_KEY: 'abc123' };
     const response = await worker.fetch(new Request('https://newsspur.de/api/push/public-key'), env);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ publicKey: 'abc123' });
   });
 
   it('liefert 503, wenn kein Public Key konfiguriert ist', async () => {
-    const env = { DB: {} as any, ASSETS: {} as any };
+    const env = { DB: {} as any, ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(new Request('https://newsspur.de/api/push/public-key'), env);
     expect(response.status).toBe(503);
   });
@@ -109,7 +131,7 @@ function mockeAboDb() {
 describe('Worker POST /api/push/abo', () => {
   it('speichert ein gueltiges Abo per Upsert', async () => {
     const { db, bind } = mockeAboDb();
-    const env = { DB: db, ASSETS: {} as any };
+    const env = { DB: db, ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(
       new Request('https://newsspur.de/api/push/abo', {
         method: 'POST',
@@ -127,7 +149,7 @@ describe('Worker POST /api/push/abo', () => {
 
   it('lehnt ein Abo ohne keys ab', async () => {
     const { db } = mockeAboDb();
-    const env = { DB: db, ASSETS: {} as any };
+    const env = { DB: db, ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(
       new Request('https://newsspur.de/api/push/abo', {
         method: 'POST',
@@ -142,7 +164,7 @@ describe('Worker POST /api/push/abo', () => {
 describe('Worker DELETE /api/push/abo', () => {
   it('loescht ein Abo per Endpoint', async () => {
     const { db, bind } = mockeAboDb();
-    const env = { DB: db, ASSETS: {} as any };
+    const env = { DB: db, ASSETS: {} as any, REELS: {} as any };
     const response = await worker.fetch(
       new Request('https://newsspur.de/api/push/abo', {
         method: 'DELETE',

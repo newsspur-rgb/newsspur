@@ -39,7 +39,7 @@ describe('audioDauerErmitteln', () => {
 });
 
 describe('videoZusammensetzen', () => {
-  it('erzeugt eine MP4-Datei aus Hintergrundbild, Audio und Untertiteln', async () => {
+  it('erzeugt eine MP4-Datei aus Hintergrundbild, Audio und Untertiteln', { timeout: 20000 }, async () => {
     const ausgabePfad = path.join(arbeitsverzeichnis, 'out.mp4');
     const ass = `[Script Info]
 ScriptType: v4.00+

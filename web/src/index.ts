@@ -4,6 +4,7 @@ import type { VerarbeitetesThema } from './pipelineTypen.js';
 export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  REELS: R2Bucket;
   VAPID_PUBLIC_KEY?: string;
 }
 
@@ -23,6 +24,14 @@ async function karteAntwort(env: Env, themaId: string): Promise<Response> {
   if (!zeile) return new Response('Nicht gefunden', { status: 404 });
   return new Response(base64ZuBytes(zeile.png_base64).buffer as ArrayBuffer, {
     headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+async function reelAntwort(env: Env, themaId: string): Promise<Response> {
+  const objekt = await env.REELS.get(`${themaId}.mp4`);
+  if (!objekt) return new Response('Nicht gefunden', { status: 404 });
+  return new Response(objekt.body, {
+    headers: { 'Content-Type': 'video/mp4', 'Cache-Control': 'public, max-age=3600' },
   });
 }
 
@@ -171,6 +180,10 @@ export default {
     const karteMatch = url.pathname.match(/^\/karte\/(.+)\.png$/);
     if (karteMatch) {
       return karteAntwort(env, karteMatch[1]);
+    }
+    const reelMatch = url.pathname.match(/^\/reel\/(.+)\.mp4$/);
+    if (reelMatch) {
+      return reelAntwort(env, reelMatch[1]);
     }
     return env.ASSETS.fetch(request);
   },
