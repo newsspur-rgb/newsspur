@@ -81,7 +81,7 @@ describe('weltpresseSuchen', () => {
 
   it('wirft, wenn GDELT einen Klartext-Drosselhinweis statt JSON liefert', async () => {
     const fetchImpl = vi.fn(async () => ({ ok: true, text: async () => 'Please limit requests to one every 5 seconds' })) as unknown as typeof fetch;
-    await expect(weltpresseSuchen(['x'], neutraleLaenderFuer('deutschland'), fetchImpl)).rejects.toThrow(/kein JSON/);
+    await expect(weltpresseSuchen(['x'], neutraleLaenderFuer('deutschland'), fetchImpl, 0, [])).rejects.toThrow(/kein JSON/);
   });
 
   it('wiederholt bei 429 und nutzt die spätere Antwort', async () => {
@@ -214,5 +214,23 @@ describe('weitblickErstellen', () => {
       weitblickStore: { speichern: async () => {} },
       jetzt: JETZT,
     })).rejects.toThrow(/Keine veroeffentlichten/);
+  });
+});
+
+describe('GDELT-Umweg', () => {
+  it('nutzt den Cloudflare-Umweg mit Geheimwort, wenn GDELT_UMWEG_SCHLUESSEL gesetzt ist', async () => {
+    const { gdeltZiel } = await import('../../src/sources/gdeltZugang.js');
+    expect(gdeltZiel({ GDELT_UMWEG_SCHLUESSEL: 'geheim' })).toEqual({
+      basisUrl: 'https://newsspur.de/api/intern/gdelt',
+      headers: { 'X-Newsspur-Schluessel': 'geheim' },
+    });
+    expect(gdeltZiel({}).basisUrl).toBe('https://api.gdeltproject.org/api/v2/doc/doc');
+  });
+
+  it('wiederholt auch bei Klartext-Drosselhinweis mit Status 200', async () => {
+    const antworten = ['Please limit requests to one every 5 seconds', '{"articles":[]}', '{"articles":[]}'];
+    const fetchImpl = vi.fn(async () => ({ ok: true, status: 200, text: async () => antworten.shift()! })) as unknown as typeof fetch;
+    await weltpresseSuchen(['x'], neutraleLaenderFuer('deutschland'), fetchImpl, 0, [0]);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
   });
 });

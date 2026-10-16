@@ -1,6 +1,5 @@
 import { landNameAusGdelt, type NeutralesLand } from './neutraleLaender.js';
-
-const GDELT_BASIS_URL = 'https://api.gdeltproject.org/api/v2/doc/doc';
+import { gdeltZiel } from '../sources/gdeltZugang.js';
 
 export interface WeltArtikel {
   land: string;
@@ -28,15 +27,21 @@ export const LAENDER_PRO_ABFRAGE = 10;
 const DROSSEL_PAUSEN_MS = [30_000, 60_000, 90_000];
 
 async function abfragen(query: string, fetchImpl: typeof fetch, drosselPausenMs = DROSSEL_PAUSEN_MS): Promise<GdeltRoh[]> {
-  const url = `${GDELT_BASIS_URL}?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=50&format=json&timespan=7d&sort=hybridrel`;
-  let antwort = await fetchImpl(url, { signal: AbortSignal.timeout(45_000) });
+  const { basisUrl, headers } = gdeltZiel();
+  const url = `${basisUrl}?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=50&format=json&timespan=7d&sort=hybridrel`;
+  const holen = async () => {
+    const antwort = await fetchImpl(url, { headers, signal: AbortSignal.timeout(45_000) });
+    return { antwort, text: await antwort.text() };
+  };
+  // Drosselung kommt als 429 oder als Status 200 mit Klartext "Please limit requests ..."
+  const gedrosselt = (a: Response, t: string) => a.status === 429 || t.startsWith('Please limit');
+  let { antwort, text } = await holen();
   for (const pause of drosselPausenMs) {
-    if (antwort.status !== 429) break;
+    if (!gedrosselt(antwort, text)) break;
     await new Promise((r) => setTimeout(r, pause));
-    antwort = await fetchImpl(url, { signal: AbortSignal.timeout(45_000) });
+    ({ antwort, text } = await holen());
   }
   if (!antwort.ok) throw new Error(`GDELT antwortete mit Status ${antwort.status}`);
-  const text = await antwort.text();
   // Bei Ueberlastung oder zu langer Abfrage antwortet GDELT mit Status 200 und Klartext statt JSON.
   if (!text.trim().startsWith('{')) throw new Error(`GDELT lieferte kein JSON: ${text.slice(0, 80)}`);
   return (JSON.parse(text) as { articles?: GdeltRoh[] }).articles ?? [];

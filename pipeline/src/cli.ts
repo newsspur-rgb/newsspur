@@ -151,7 +151,16 @@ async function main(): Promise<void> {
   const rss = await sammle(feeds.map((f) => ({ name: f.quelle.id, lauf: () => feedAbrufen(f) })));
 
   console.log(`GDELT-Abfragen (${gdeltAbfragen.length}):`);
-  const gdelt = await sammle(gdeltAbfragen.map((a) => ({ name: a.kategorie, lauf: () => gdeltAbrufen(a) })));
+  // GDELT erlaubt max. 1 Abfrage pro 5 s - daher zeitversetzt statt gleichzeitig (sonst 429).
+  const gdelt = await sammle(
+    gdeltAbfragen.map((a, i) => ({
+      name: a.kategorie,
+      lauf: async () => {
+        await new Promise((r) => setTimeout(r, i * 7_000));
+        return gdeltAbrufen(a);
+      },
+    })),
+  );
 
   const alle = [...rss, ...gdelt];
   console.log(`\n${alle.length} Artikel gesammelt. Starte Pipeline ...\n`);

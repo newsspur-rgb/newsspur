@@ -1,8 +1,7 @@
 import type { Artikel, Quelle } from '../types.js';
 import { kurzeHashId } from '../util/hash.js';
 import type { GdeltAbfrage } from './gdeltAbfragen.js';
-
-const GDELT_BASIS_URL = 'https://api.gdeltproject.org/api/v2/doc/doc';
+import { gdeltZiel } from './gdeltZugang.js';
 
 interface GdeltArtikelRoh {
   url?: string;
@@ -30,8 +29,9 @@ export async function gdeltAbrufen(
   timespanMinuten = 60,
   fetchImpl: typeof fetch = fetch,
 ): Promise<Artikel[]> {
-  const url = `${GDELT_BASIS_URL}?query=${encodeURIComponent(abfrage.suchbegriff)}&mode=ArtList&maxrecords=75&format=json&timespan=${timespanMinuten}min`;
-  const antwort = await fetchImpl(url);
+  const { basisUrl, headers } = gdeltZiel();
+  const url = `${basisUrl}?query=${encodeURIComponent(abfrage.suchbegriff)}&mode=ArtList&maxrecords=75&format=json&timespan=${timespanMinuten}min`;
+  const antwort = await fetchImpl(url, { headers, signal: AbortSignal.timeout(45_000) });
   if (!antwort.ok) {
     throw new Error(`GDELT antwortete mit Status ${antwort.status}`);
   }

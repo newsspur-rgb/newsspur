@@ -2,6 +2,7 @@ import { themaZuApi } from './aufbereiten.js';
 import type { VerarbeitetesThema } from './pipelineTypen.js';
 import { bundestagAntwort, weitblickAntwort } from './bundestagWeitblick.js';
 import { bundestagSucheAntwort } from './bundestagSuche.js';
+import { gdeltUmwegAntwort } from './gdeltUmweg.js';
 
 export interface Env {
   ASSETS: Fetcher;
@@ -9,6 +10,8 @@ export interface Env {
   /** Fehlt, solange R2 im Cloudflare-Konto nicht aktiviert ist (siehe wrangler.jsonc). */
   REELS?: R2Bucket;
   VAPID_PUBLIC_KEY?: string;
+  /** Geheimwort fuer den GDELT-Umweg der Pipeline (Worker-Secret). */
+  GDELT_UMWEG_SCHLUESSEL?: string;
 }
 
 const REAKTION_EMOJIS = ['😍', '😢', '😂', '😱', '🤬'];
@@ -168,6 +171,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/themen') {
       return themenAntwort(env);
+    }
+    if (url.pathname === '/api/intern/gdelt') {
+      return gdeltUmwegAntwort(request, env.GDELT_UMWEG_SCHLUESSEL);
     }
     if (url.pathname === '/api/bundestag/suche') {
       return bundestagSucheAntwort(request);
