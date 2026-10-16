@@ -1,6 +1,13 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-## Bundestag + Weitblick gebaut, noch NICHT live (2026-10-16)
+## Bundestag + Weitblick (2026-10-16)
+
+**Update spät abends:** D1-Migration angewendet, 43 echte Gesetze eingespielt,
+`wrangler deploy` gelaufen (newsspur.de zeigt beide Tabs), Commit `a2cad8d` gepusht.
+R2-Binding in `web/wrangler.jsonc` auskommentiert (R2 im Konto nie aktiviert, blockierte
+den Deploy). Commits ab jetzt ohne Claude-Zeile (Nutzerwunsch). Offen bleibt nur:
+GitHub-Actions-Abrechnung (s. u.) → danach `gh workflow run Bundestag` / `Weitblick`.
+
 
 **ACHTUNG – wichtigster offener Punkt:** GitHub startet seit dem 2026-10-03 keinen
 Action-Lauf mehr („recent account payments have failed or your spending limit
