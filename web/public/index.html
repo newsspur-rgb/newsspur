@@ -614,7 +614,7 @@
     </header>
 
     <main class="scroll" id="feed">
-      <p class="feed-date">Montag · 1. September 2026 · <span id="upd">aktualisiert vor 6 Min</span></p>
+      <p class="feed-date"><span id="heute"></span><span id="upd"></span></p>
       <div id="cards"></div>
       <p class="held" id="held"></p>
       <p class="legal">NEWSSPUR · automatischer Nachrichten-Dienst · Meldungen aus mehreren Quellen zusammengefasst, Originale stets verlinkt</p>
@@ -1319,12 +1319,16 @@
     };
   }
 
+  $('#heute').textContent = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(', ', ' · ');
+
   async function ladeUndRendere() {
     try {
       const antwort = await fetch('/api/themen');
       const daten = await antwort.json();
       STORIES = daten.themen.map(apiThemaZuStory);
       HELD_N = String(daten.zurueckgehalten);
+      const neueste = daten.themen.map((t) => t.aktualisiert).sort().pop();
+      if (neueste) $('#upd').textContent = ' · aktualisiert ' + relativZeit(neueste);
     } catch (e) {
       console.error('Konnte Meldungen nicht laden:', e);
       STORIES = [];
