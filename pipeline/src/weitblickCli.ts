@@ -8,6 +8,8 @@ import { blueskyStimmenSammeln } from './weitblick/bluesky.js';
 import { erstelleD1WeitblickStore } from './weitblick/weitblickStore.js';
 import { weitblickErstellen } from './weitblick/weitblick.js';
 
+const WEITBLICK_MODELL = 'gemini-3.5-flash-lite';
+
 async function main(): Promise<void> {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN, GEMINI_API_KEY } = process.env;
   if (!GEMINI_API_KEY || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_D1_DATABASE_ID || !CLOUDFLARE_API_TOKEN) {
@@ -19,7 +21,8 @@ async function main(): Promise<void> {
   const weitblick = await weitblickErstellen({
     themenStore: new D1ThemenStore(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN),
     bundestagStore: erstelleD1BundestagStore(abfragen),
-    geminiClient: erstelleGeminiClient(GEMINI_API_KEY),
+    // Eigenes Gratis-Kontingent: das Standardmodell braucht der 30-Min-Nachrichtenlauf (sonst 429).
+    geminiClient: erstelleGeminiClient(GEMINI_API_KEY, fetch, undefined, WEITBLICK_MODELL),
     weltSuche: weltpresseSuchen,
     stimmenSuche: blueskyStimmenSammeln,
     weitblickStore: erstelleD1WeitblickStore(abfragen),
