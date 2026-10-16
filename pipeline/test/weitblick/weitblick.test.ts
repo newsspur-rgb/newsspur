@@ -83,6 +83,70 @@ describe('weltpresseSuchen', () => {
     const fetchImpl = vi.fn(async () => ({ ok: true, text: async () => 'Please limit requests to one every 5 seconds' })) as unknown as typeof fetch;
     await expect(weltpresseSuchen(['x'], neutraleLaenderFuer('deutschland'), fetchImpl)).rejects.toThrow(/kein JSON/);
   });
+
+  it('wiederholt bei 429 und nutzt die spätere Antwort', async () => {
+    const status = [429, 200, 200];
+    const fetchImpl = vi.fn(async () => {
+      const s = status.shift()!;
+      return { ok: s < 400, status: s, text: async () => JSON.stringify({ articles: [{ url: 'u', title: 't', domain: 'd.in', sourcecountry: 'India' }] }) };
+    }) as unknown as typeof fetch;
+    const ergebnis = await weltpresseSuchen(['x'], neutraleLaenderFuer('deutschland'), fetchImpl, 0, [0]);
+    expect(ergebnis).toHaveLength(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(3); // 429 + Wiederholung + zweite Länder-Hälfte
+  });
+});
+
+describe('weitblickErstellen mit Bluesky-Stimmung', () => {
+  it('bewertet die Stimmung in einem dritten Gemini-Aufruf und filtert Räume mit zu wenig passenden Posts', async () => {
+    const themenStore = new SpeicherThemenStore();
+    await themenStore.speichern(thema('b', 'Groß', 90));
+    const antworten: unknown[] = [
+      { einleitung: 'Woche.', entwicklungen: [{ titel: 'Merz in Kiew', kategorie: 'deutschland', kurz: 'K.', themaIds: ['b'], suchbegriffe: ['Merz'], uebersetzteSuche: [{ sprache: 'ru', suchtext: 'Мерц' }] }] },
+      { bewertungen: [{ nummer: 1, urteil: 'teilweise', uebereinstimmung: 'U.', abweichungen: [] }] },
+      { stimmungen: [
+        { nummer: 1, sprachraum: 'Russisch', passendePosts: 4, zusammenfassung: 'Auf Bluesky skeptisch.', ton: 'ablehnend' },
+        { nummer: 1, sprachraum: 'Japanisch', passendePosts: 1, zusammenfassung: 'Kaum.', ton: 'neutral' },
+      ] },
+    ];
+    const geminiClient = { strukturierteAntwort: vi.fn(async () => antworten.shift()) };
+    const posts = (n: number) => Array.from({ length: n }, (_, i) => ({ text: `p${i}`, autor: 'a', sprache: 'ru', likes: i, url: `u${i}` }));
+    const stimmenSuche = vi.fn(async () => [
+      { sprachraum: 'Russisch', posts: posts(5) },
+      { sprachraum: 'Japanisch', posts: posts(3) },
+    ]);
+
+    const ergebnis = await weitblickErstellen({
+      themenStore, geminiClient, stimmenSuche, pauseMs: 0, jetzt: JETZT,
+      weltSuche: async () => artikel(['Indien', 'Brasilien', 'Kenia']),
+      weitblickStore: { speichern: async () => {} },
+    });
+
+    expect(geminiClient.strukturierteAntwort).toHaveBeenCalledTimes(3);
+    expect(stimmenSuche).toHaveBeenCalledWith(['Merz'], { ru: 'Мерц' }, '2026-10-11T16:00:00.000Z');
+    const stimmung = ergebnis.entwicklungen[0].stimmung!;
+    expect(stimmung.map((s) => s.sprachraum)).toEqual(['Russisch']);
+    expect(stimmung[0]).toMatchObject({ ton: 'ablehnend', anzahlPosts: 4 });
+    expect(stimmung[0].beispiele).toHaveLength(2);
+  });
+
+  it('behält Weltpresse-Ergebnis, wenn die Stimmungs-Bewertung scheitert', async () => {
+    const themenStore = new SpeicherThemenStore();
+    await themenStore.speichern(thema('b', 'Groß', 90));
+    const antworten: unknown[] = [
+      { einleitung: 'Woche.', entwicklungen: [{ titel: 'T', kategorie: 'deutschland', kurz: 'K.', themaIds: ['b'], suchbegriffe: ['Merz'] }] },
+      { bewertungen: [{ nummer: 1, urteil: 'deckungsgleich', uebereinstimmung: 'U.', abweichungen: [] }] },
+      { kaputt: true },
+    ];
+    const ergebnis = await weitblickErstellen({
+      themenStore, pauseMs: 0, jetzt: JETZT,
+      geminiClient: { strukturierteAntwort: async () => antworten.shift() },
+      stimmenSuche: async () => [{ sprachraum: 'Deutsch', posts: [{ text: 'x', autor: 'a', sprache: 'de', likes: 0, url: 'u' }] }],
+      weltSuche: async () => artikel(['Indien', 'Brasilien', 'Kenia']),
+      weitblickStore: { speichern: async () => {} },
+    });
+    expect(ergebnis.entwicklungen[0].weltblick.urteil).toBe('deckungsgleich');
+    expect(ergebnis.entwicklungen[0].stimmung).toEqual([]);
+  });
 });
 
 describe('weitblickErstellen', () => {

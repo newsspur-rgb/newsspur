@@ -1,6 +1,7 @@
 import type { Gesetz } from '../bundestag/typen.js';
 import type { Kategorie } from './neutraleLaender.js';
 import type { WeltArtikel } from './gdeltWelt.js';
+import type { BlueskyPost } from './bluesky.js';
 
 export type WeltUrteil = 'deckungsgleich' | 'teilweise' | 'widerspruechlich' | 'kaum-berichtet';
 
@@ -13,6 +14,17 @@ export interface Weltblick {
   belege: WeltArtikel[];
 }
 
+export type StimmungsTon = 'zustimmend' | 'ablehnend' | 'gemischt' | 'neutral';
+
+/** Bluesky-Stimmung in einem Sprachraum - nicht repraesentativ. */
+export interface SprachStimmung {
+  sprachraum: string;
+  anzahlPosts: number;
+  zusammenfassung: string;
+  ton: StimmungsTon;
+  beispiele: BlueskyPost[];
+}
+
 export interface WeitblickEntwicklung {
   titel: string;
   kategorie: Kategorie;
@@ -20,6 +32,7 @@ export interface WeitblickEntwicklung {
   kurz: string;
   themaIds: string[];
   weltblick: Weltblick;
+  stimmung?: SprachStimmung[];
 }
 
 export interface Weitblick {

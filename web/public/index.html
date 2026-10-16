@@ -559,6 +559,24 @@
   .welt-laender { font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-3); line-height: 1.6; }
   .welt p { margin: 0; font-size: 13.5px; line-height: 1.5; white-space: pre-line; }
   .welt details summary { cursor: pointer; font-family: var(--font-mono); font-size: 9.5px; color: var(--red-ink); }
+  .stimmungen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .stimmungen li { display: flex; flex-direction: column; gap: 4px; padding-top: 9px; border-top: 1px solid var(--line-soft); }
+  .stimmungen li:first-child { border-top: 0; padding-top: 0; }
+  .stimmung-kopf { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+  .stimmung-raum { font-weight: 700; font-size: 12.5px; }
+  .ton { font-family: var(--font-mono); font-size: 8.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 1px 6px; border: 1px solid currentColor; }
+  .ton.zustimmend { color: #1E7A3C; }
+  .ton.ablehnend { color: var(--red-ink); }
+  .ton.gemischt { color: #9A6B00; }
+  .ton.neutral { color: var(--ink-3); }
+  :root[data-theme="dark"] .ton.zustimmend { color: #5BD585; }
+  :root[data-theme="dark"] .ton.gemischt { color: #E8B53A; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .ton.zustimmend { color: #5BD585; }
+    :root:not([data-theme="light"]) .ton.gemischt { color: #E8B53A; }
+  }
+  .stimmungen p { margin: 0; font-size: 13px; line-height: 1.45; }
+  .stimmung-n { font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); }
   .belege { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .belege a { font-size: 12px; line-height: 1.4; color: var(--ink-2); text-decoration: none; }
   .belege a:hover { color: var(--red-ink); }
@@ -904,6 +922,42 @@
     return box;
   }
 
+  const TON_LABEL = { zustimmend: 'Zustimmend', ablehnend: 'Ablehnend', gemischt: 'Gemischt', neutral: 'Neutral' };
+
+  function stimmungBlock(stimmung) {
+    const box = el('div', 'welt');
+    const kopf = el('div', 'welt-kopf');
+    const lab = el('span', 'welt-label'); lab.textContent = 'Stimmung auf Bluesky'; kopf.appendChild(lab);
+    box.appendChild(kopf);
+    const hinweis = el('span', 'welt-laender'); hinweis.textContent = 'Nach Sprachraum, nicht repräsentativ – öffentliche Posts der letzten 7 Tage'; box.appendChild(hinweis);
+    const ul = el('ul', 'stimmungen');
+    stimmung.forEach((s) => {
+      const li = el('li');
+      const k = el('div', 'stimmung-kopf');
+      const r = el('span', 'stimmung-raum'); r.textContent = s.sprachraum; k.appendChild(r);
+      const t = el('span', 'ton ' + s.ton); t.textContent = TON_LABEL[s.ton] || s.ton; k.appendChild(t);
+      const n = el('span', 'stimmung-n'); n.textContent = s.anzahlPosts + ' Posts'; k.appendChild(n);
+      li.appendChild(k);
+      const p = el('p'); p.textContent = s.zusammenfassung; li.appendChild(p);
+      if (s.beispiele && s.beispiele.length) {
+        const det = el('details');
+        const sum = el('summary'); sum.textContent = 'Beispiel-Posts'; det.appendChild(sum);
+        const bl = el('ul', 'belege');
+        s.beispiele.forEach((b) => {
+          const bli = el('li');
+          const a = el('a'); a.href = b.url; a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = b.text;
+          bli.appendChild(a); bl.appendChild(bli);
+        });
+        det.appendChild(bl);
+        li.appendChild(det);
+      }
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    return box;
+  }
+
   async function renderWeitblick(wrap, woche) {
     if (!WEITBLICK || woche) {
       leer(wrap, 'Lade Wochenrückblick …');
@@ -931,7 +985,7 @@
 
     const m = el('div', 'methode');
     const mb = el('b'); mb.textContent = 'So prüfen wir: '; m.appendChild(mb);
-    m.appendChild(document.createTextNode('Jede Entwicklung wird mit Medien aus weit entfernten Ländern ohne eigenes Interesse abgeglichen – etwa Indien, Brasilien, Kenia oder Papua-Neuguinea. Nur was dort übereinstimmend berichtet wird, gilt als gesichert. Grundlage sind die Schlagzeilen (über GDELT).'));
+    m.appendChild(document.createTextNode('Jede Entwicklung wird mit Medien aus weit entfernten Ländern ohne eigenes Interesse abgeglichen – etwa Indien, Brasilien, Kenia oder Papua-Neuguinea. Nur was dort übereinstimmend berichtet wird, gilt als gesichert. Grundlage sind die Schlagzeilen (über GDELT). Dazu zeigen wir, wie in verschiedenen Sprachräumen auf Bluesky darüber gesprochen wird – als Stimmungsbild, nicht als Beleg.'));
     wrap.appendChild(m);
 
     wb.entwicklungen.forEach((e, i) => {
@@ -940,6 +994,7 @@
       const h = el('h3'); h.textContent = e.titel; box.appendChild(h);
       const k = el('p', 'kurz'); k.textContent = e.kurz; box.appendChild(k);
       box.appendChild(weltBlock(e.weltblick));
+      if (e.stimmung && e.stimmung.length) box.appendChild(stimmungBlock(e.stimmung));
       wrap.appendChild(box);
     });
 

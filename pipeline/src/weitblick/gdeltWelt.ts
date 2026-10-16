@@ -24,9 +24,17 @@ interface GdeltRoh {
 /** GDELT lehnt laengere Abfragen ab ("query too long") - 10 Laender-Filter pro Abfrage passen (getestet 2026-10-16). */
 export const LAENDER_PRO_ABFRAGE = 10;
 
-async function abfragen(query: string, fetchImpl: typeof fetch): Promise<GdeltRoh[]> {
+/** GDELT drosselt geteilte IPs (z. B. GitHub-Server) oft mit 429 - dann mit wachsender Pause erneut versuchen. */
+const DROSSEL_PAUSEN_MS = [30_000, 60_000, 90_000];
+
+async function abfragen(query: string, fetchImpl: typeof fetch, drosselPausenMs = DROSSEL_PAUSEN_MS): Promise<GdeltRoh[]> {
   const url = `${GDELT_BASIS_URL}?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=50&format=json&timespan=7d&sort=hybridrel`;
-  const antwort = await fetchImpl(url, { signal: AbortSignal.timeout(45_000) });
+  let antwort = await fetchImpl(url, { signal: AbortSignal.timeout(45_000) });
+  for (const pause of drosselPausenMs) {
+    if (antwort.status !== 429) break;
+    await new Promise((r) => setTimeout(r, pause));
+    antwort = await fetchImpl(url, { signal: AbortSignal.timeout(45_000) });
+  }
   if (!antwort.ok) throw new Error(`GDELT antwortete mit Status ${antwort.status}`);
   const text = await antwort.text();
   // Bei Ueberlastung oder zu langer Abfrage antwortet GDELT mit Status 200 und Klartext statt JSON.
@@ -39,6 +47,7 @@ export async function weltpresseSuchen(
   laender: NeutralesLand[],
   fetchImpl: typeof fetch = fetch,
   pauseMs = 7_000,
+  drosselPausenMs = DROSSEL_PAUSEN_MS,
 ): Promise<WeltArtikel[]> {
   const begriffe = suchbegriffe.map((b) => (b.includes(' ') ? `"${b}"` : b)).join(' ');
   const gesehen = new Set<string>();
@@ -47,7 +56,7 @@ export async function weltpresseSuchen(
   for (let i = 0; i < laender.length; i += LAENDER_PRO_ABFRAGE) {
     if (i > 0) await new Promise((r) => setTimeout(r, pauseMs));
     const filter = laender.slice(i, i + LAENDER_PRO_ABFRAGE).map((l) => `sourcecountry:${l.fips}`).join(' OR ');
-    for (const a of await abfragen(`${begriffe} (${filter})`, fetchImpl)) {
+    for (const a of await abfragen(`${begriffe} (${filter})`, fetchImpl, drosselPausenMs)) {
       if (!a.url || !a.title || !a.domain || gesehen.has(a.domain)) continue;
       gesehen.add(a.domain);
       ergebnis.push({ land: landNameAusGdelt(a.sourcecountry ?? ''), medium: a.domain, titel: a.title.trim(), url: a.url });

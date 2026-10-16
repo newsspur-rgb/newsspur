@@ -25,7 +25,9 @@ function quelleAusDomain(domain: string): Quelle {
 
 export async function gdeltAbrufen(
   abfrage: GdeltAbfrage,
-  timespanMinuten = 30,
+  // GDELT lehnt seit Herbst 2026 Zeitraeume unter 60 Minuten ab ("Timespan is too short").
+  // Doppelte Artikel aus der Ueberlappung fallen ueber die URL-Hash-ID raus.
+  timespanMinuten = 60,
   fetchImpl: typeof fetch = fetch,
 ): Promise<Artikel[]> {
   const url = `${GDELT_BASIS_URL}?query=${encodeURIComponent(abfrage.suchbegriff)}&mode=ArtList&maxrecords=75&format=json&timespan=${timespanMinuten}min`;

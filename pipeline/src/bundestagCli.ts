@@ -5,6 +5,8 @@ import { bundestagLauf } from './bundestag/bundestagLauf.js';
 import { erstelleD1Abfrage } from './store/d1Abfrage.js';
 import { erstelleGeminiClient } from './summarize/geminiClient.js';
 
+const DEBATTEN_MODELL = 'gemini-3.5-flash-lite';
+
 async function main(): Promise<void> {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN, GEMINI_API_KEY, DIP_API_KEY } = process.env;
   const nurGesetze = process.argv.includes('--nur-gesetze');
@@ -19,7 +21,9 @@ async function main(): Promise<void> {
     store = speicher;
   }
 
-  const geminiClient = GEMINI_API_KEY && !nurGesetze ? erstelleGeminiClient(GEMINI_API_KEY) : undefined;
+  // Lange Protokolle (bis 400k Zeichen) scheiterten beim Standardmodell dauerhaft an 503 ("high demand");
+  // das Lite-Modell schafft sie in ~10 s bei guter Qualitaet (getestet 2026-10-16).
+  const geminiClient = GEMINI_API_KEY && !nurGesetze ? erstelleGeminiClient(GEMINI_API_KEY, fetch, undefined, DEBATTEN_MODELL) : undefined;
   console.log(`Debatten-Zusammenfassung: ${geminiClient ? 'aktiv' : 'uebersprungen'}`);
 
   const ergebnis = await bundestagLauf({

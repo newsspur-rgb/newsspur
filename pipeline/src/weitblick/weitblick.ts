@@ -4,7 +4,8 @@ import type { GeminiClient } from '../summarize/geminiClient.js';
 import type { VerarbeitetesThema } from '../types.js';
 import type { WeltArtikel } from './gdeltWelt.js';
 import { neutraleLaenderFuer, type Kategorie, type NeutralesLand } from './neutraleLaender.js';
-import type { Weitblick, WeitblickEntwicklung, Weltblick, WeltUrteil } from './typen.js';
+import type { SprachStimmung, StimmungsTon, Weitblick, WeitblickEntwicklung, Weltblick, WeltUrteil } from './typen.js';
+import { ALLE_SPRACHEN, type SprachraumPosts } from './bluesky.js';
 
 const KATEGORIEN: Kategorie[] = ['deutschland', 'tuerkei', 'nahost'];
 /** Unter so vielen verschiedenen Laendern gilt ein Thema als "kaum berichtet" - kein Abgleich moeglich. */
@@ -12,6 +13,7 @@ export const MIN_LAENDER = 3;
 const MAX_EINGABE_THEMEN = 25;
 
 export type WeltSuche = (suchbegriffe: string[], laender: NeutralesLand[]) => Promise<WeltArtikel[]>;
+export type StimmenSuche = (suchbegriffe: string[], uebersetzt: Record<string, string>, seitIso: string) => Promise<SprachraumPosts[]>;
 
 export interface WeitblickStore {
   speichern(weitblick: Weitblick): Promise<void>;
@@ -22,6 +24,8 @@ export interface WeitblickAbhaengigkeiten {
   bundestagStore?: BundestagStore;
   geminiClient: GeminiClient;
   weltSuche: WeltSuche;
+  /** Bluesky-Stimmung nach Sprache - optional, ohne sie entfaellt nur dieser Teil. */
+  stimmenSuche?: StimmenSuche;
   weitblickStore: WeitblickStore;
   /** Pause zwischen GDELT-Abfragen (GDELT erlaubt max. 1 Abfrage pro 5 s). */
   pauseMs?: number;
@@ -74,8 +78,16 @@ export const AUSWAHL_SCHEMA = {
           kurz: { type: 'string' },
           themaIds: { type: 'array', items: { type: 'string' } },
           suchbegriffe: { type: 'array', items: { type: 'string' } },
+          uebersetzteSuche: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { sprache: { type: 'string', enum: ALLE_SPRACHEN }, suchtext: { type: 'string' } },
+              required: ['sprache', 'suchtext'],
+            },
+          },
         },
-        required: ['titel', 'kategorie', 'kurz', 'themaIds', 'suchbegriffe'],
+        required: ['titel', 'kategorie', 'kurz', 'themaIds', 'suchbegriffe', 'uebersetzteSuche'],
       },
     },
   },
@@ -103,6 +115,7 @@ AUFGABE:
   - "kurz": hoechstens 5 kurze Zeilen - was ist passiert, nur aus den Meldungen
   - "themaIds": Kennungen der zugrunde liegenden Meldungen (nur die oben angegebenen)
   - "suchbegriffe": 2-3 ENGLISCHE Stichwoerter (Namen, Orte, Schluesselbegriff), mit denen man die Entwicklung in der Weltpresse findet, z. B. ["Merz", "Ukraine", "visit"]
+  - "uebersetzteSuche": fuer JEDE dieser Sprachen (${ALLE_SPRACHEN.join(', ')}) ein Eintrag mit "suchtext" = dieselben 2 wichtigsten Stichwoerter so, wie man sie in dieser Sprache und Schrift schreibt (z. B. ar: "ميرتس أوكرانيا", ru: "Мерц Украина", zh: "默茨 乌克兰"). Nur die Stichwoerter, kein Satz.
 
 STRENGE REGELN:
 - Nur Informationen aus den Meldungen. Nichts erfinden.
@@ -116,7 +129,14 @@ ${block}`;
 
 interface AuswahlRoh {
   einleitung: string;
-  entwicklungen: Array<{ titel: string; kategorie: Kategorie; kurz: string; themaIds: string[]; suchbegriffe: string[] }>;
+  entwicklungen: Array<{
+    titel: string;
+    kategorie: Kategorie;
+    kurz: string;
+    themaIds: string[];
+    suchbegriffe: string[];
+    uebersetzteSuche?: Array<{ sprache: string; suchtext: string }>;
+  }>;
 }
 
 function istAuswahl(wert: unknown): wert is AuswahlRoh {
@@ -207,6 +227,107 @@ function istAbgleich(wert: unknown): wert is AbgleichRoh {
   );
 }
 
+// ---------- Schritt 3: Bluesky-Stimmung nach Sprachraum ----------
+
+const TOENE: StimmungsTon[] = ['zustimmend', 'ablehnend', 'gemischt', 'neutral'];
+
+export const STIMMUNG_SCHEMA = {
+  type: 'object',
+  properties: {
+    stimmungen: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          nummer: { type: 'number' },
+          sprachraum: { type: 'string' },
+          passendePosts: { type: 'number' },
+          zusammenfassung: { type: 'string' },
+          ton: { type: 'string', enum: TOENE },
+        },
+        required: ['nummer', 'sprachraum', 'passendePosts', 'zusammenfassung', 'ton'],
+      },
+    },
+  },
+  required: ['stimmungen'],
+};
+
+export function stimmungPromptErstellen(faelle: Array<{ nummer: number; titel: string; raeume: SprachraumPosts[] }>): string {
+  const block = faelle
+    .map((f) => {
+      const raeume = f.raeume
+        .map((r) => `  Sprachraum "${r.sprachraum}":\n${r.posts.map((p) => `   - ${p.text}`).join('\n')}`)
+        .join('\n');
+      return `FALL ${f.nummer}: ${f.titel}\n${raeume}`;
+    })
+    .join('\n\n');
+
+  return `Du wertest oeffentliche Bluesky-Posts aus, um die Stimmung in verschiedenen Sprachraeumen zu einem Ereignis zu beschreiben.
+
+AUFGABE: Je Fall und Sprachraum ein Eintrag (Feld "nummer" = Fallnummer, "sprachraum" exakt wie angegeben):
+- "passendePosts": wie viele der Posts sich wirklich auf DIESES Ereignis beziehen. Posts zu anderen Themen oder in einer offensichtlich anderen Sprache nicht mitzaehlen.
+- "zusammenfassung": 1-2 Saetze, welche Haltung/Sorge/Reaktion in den passenden Posts ueberwiegt. Beginne mit "Auf Bluesky ...". Bei 0 passenden Posts: "Keine passenden Posts."
+- "ton": zustimmend, ablehnend, gemischt oder neutral - gegenueber dem Ereignis bzw. den Handelnden.
+
+STRENGE REGELN:
+- Nur aus den Posts ableiten, nichts hinzuerfinden. Keine Namen von Privatpersonen nennen.
+- Sachlich wiedergeben, nicht werten. Beleidigungen nicht zitieren.
+- Antworte auf Deutsch.
+
+${block}`;
+}
+
+interface StimmungRoh {
+  stimmungen: Array<{ nummer: number; sprachraum: string; passendePosts: number; zusammenfassung: string; ton: StimmungsTon }>;
+}
+
+function istStimmung(wert: unknown): wert is StimmungRoh {
+  if (typeof wert !== 'object' || wert === null) return false;
+  const w = wert as Record<string, unknown>;
+  return (
+    Array.isArray(w.stimmungen) &&
+    w.stimmungen.every(
+      (s: any) =>
+        typeof s?.nummer === 'number' &&
+        typeof s?.sprachraum === 'string' &&
+        typeof s?.passendePosts === 'number' &&
+        typeof s?.zusammenfassung === 'string' &&
+        TOENE.includes(s?.ton),
+    )
+  );
+}
+
+/** Ein Gemini-Aufruf fuer alle Entwicklungen; Sprachraeume mit zu wenig passenden Posts fallen raus. */
+async function stimmungenBewerten(
+  faelle: Array<{ nummer: number; titel: string; raeume: SprachraumPosts[] }>,
+  client: GeminiClient,
+): Promise<Map<number, SprachStimmung[]>> {
+  const ergebnis = new Map<number, SprachStimmung[]>();
+  const mitPosts = faelle.filter((f) => f.raeume.length > 0);
+  if (mitPosts.length === 0) return ergebnis;
+
+  const roh = await client.strukturierteAntwort(stimmungPromptErstellen(mitPosts), STIMMUNG_SCHEMA);
+  if (!istStimmung(roh)) throw new Error('Gemini-Antwort hat nicht die erwartete Form (ungueltige Stimmung)');
+
+  for (const s of roh.stimmungen) {
+    const raum = mitPosts.find((f) => f.nummer === s.nummer)?.raeume.find((r) => r.sprachraum === s.sprachraum);
+    if (!raum || s.passendePosts < MIN_PASSENDE_POSTS) continue;
+    const liste = ergebnis.get(s.nummer) ?? [];
+    liste.push({
+      sprachraum: s.sprachraum,
+      anzahlPosts: s.passendePosts,
+      zusammenfassung: s.zusammenfassung,
+      ton: s.ton,
+      beispiele: raum.posts.slice(0, 2),
+    });
+    ergebnis.set(s.nummer, liste);
+  }
+  return ergebnis;
+}
+
+/** Mindestens so viele Posts muessen laut Gemini wirklich zum Ereignis passen. */
+export const MIN_PASSENDE_POSTS = 2;
+
 function kaumBerichtet(artikel: WeltArtikel[]): Weltblick {
   const laender = [...new Set(artikel.map((a) => a.land))];
   return {
@@ -260,6 +381,25 @@ export async function weitblickErstellen(deps: WeitblickAbhaengigkeiten): Promis
     for (const b of abgleich.bewertungen) bewertungen.set(b.nummer, b);
   }
 
+  // Bluesky-Stimmung: eigener Gemini-Aufruf - scheitert er, bleibt der Rest des Weitblicks erhalten.
+  let stimmungen = new Map<number, SprachStimmung[]>();
+  if (deps.stimmenSuche) {
+    try {
+      const faelleStimmung = [];
+      for (const [i, e] of entwicklungenRoh.entries()) {
+        const uebersetzt = Object.fromEntries(
+          (Array.isArray(e.uebersetzteSuche) ? e.uebersetzteSuche : [])
+            .filter((u) => typeof u?.sprache === 'string' && typeof u?.suchtext === 'string')
+            .map((u) => [u.sprache, u.suchtext]),
+        );
+        faelleStimmung.push({ nummer: i + 1, titel: e.titel, raeume: await deps.stimmenSuche(e.suchbegriffe.slice(0, 3), uebersetzt, von) });
+      }
+      stimmungen = await stimmungenBewerten(faelleStimmung, deps.geminiClient);
+    } catch (fehlerUrsache) {
+      console.warn('Bluesky-Stimmung uebersprungen:', fehlerUrsache);
+    }
+  }
+
   const entwicklungen: WeitblickEntwicklung[] = entwicklungenRoh.map((e, i) => {
     const artikel = weltArtikel[i];
     const b = bewertungen.get(i + 1);
@@ -278,6 +418,7 @@ export async function weitblickErstellen(deps: WeitblickAbhaengigkeiten): Promis
       kurz: e.kurz,
       themaIds: e.themaIds.filter((id) => bekannteIds.has(id)),
       weltblick,
+      stimmung: stimmungen.get(i + 1) ?? [],
     };
   });
 

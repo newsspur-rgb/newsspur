@@ -2,7 +2,8 @@ export interface GeminiClient {
   strukturierteAntwort(prompt: string, schema: object): Promise<unknown>;
 }
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent';
+export const STANDARD_MODELL = 'gemini-3.6-flash';
+const geminiUrl = (modell: string) => `https://generativelanguage.googleapis.com/v1beta/models/${modell}:generateContent`;
 
 /** Wartezeiten vor erneutem Versuch, wenn Gemini mit 503 ("high demand") antwortet - temporaere Lastspitzen bei Google. */
 const WIEDERHOLUNGS_PAUSEN_MS = [20_000, 60_000];
@@ -11,11 +12,12 @@ export function erstelleGeminiClient(
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
   pausenMs: number[] = WIEDERHOLUNGS_PAUSEN_MS,
+  modell: string = STANDARD_MODELL,
 ): GeminiClient {
   return {
     async strukturierteAntwort(prompt: string, schema: object): Promise<unknown> {
       const anfrage = () =>
-        fetchImpl(`${GEMINI_URL}?key=${apiKey}`, {
+        fetchImpl(`${geminiUrl(modell)}?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

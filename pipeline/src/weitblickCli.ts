@@ -4,6 +4,7 @@ import { erstelleD1Abfrage } from './store/d1Abfrage.js';
 import { erstelleD1BundestagStore } from './bundestag/bundestagStore.js';
 import { erstelleGeminiClient } from './summarize/geminiClient.js';
 import { weltpresseSuchen } from './weitblick/gdeltWelt.js';
+import { blueskyStimmenSammeln } from './weitblick/bluesky.js';
 import { erstelleD1WeitblickStore } from './weitblick/weitblickStore.js';
 import { weitblickErstellen } from './weitblick/weitblick.js';
 
@@ -20,12 +21,14 @@ async function main(): Promise<void> {
     bundestagStore: erstelleD1BundestagStore(abfragen),
     geminiClient: erstelleGeminiClient(GEMINI_API_KEY),
     weltSuche: weltpresseSuchen,
+    stimmenSuche: blueskyStimmenSammeln,
     weitblickStore: erstelleD1WeitblickStore(abfragen),
   });
 
   console.log(`Weitblick ${weitblick.woche} gespeichert: ${weitblick.einleitung}`);
   for (const e of weitblick.entwicklungen) {
     console.log(`- [${e.kategorie}] ${e.titel} | Weltpresse: ${e.weltblick.urteil} (${e.weltblick.laender.join(', ') || 'keine'})`);
+    console.log(`    Bluesky: ${(e.stimmung ?? []).map((s) => `${s.sprachraum}=${s.ton}`).join(', ') || 'keine Stimmung'}`);
   }
   console.log(`Gesetze der Woche: ${weitblick.gesetze.length}`);
 }
