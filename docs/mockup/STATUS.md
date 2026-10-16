@@ -1,5 +1,24 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## Stand Sessionende 2026-10-16, ~22 Uhr
+
+- **Repo ist öffentlich** (Nutzer-OK) → GitHub Actions laufen wieder gratis. Vorher Historie
+  auf Schlüssel geprüft: nur der öffentliche DIP-Key. Alte 46 Commits enthalten noch die Claude-Zeile.
+- Nachrichten-Lauf läuft wieder (seit 03.10. blockiert gewesen). Zeitgesteuerte Läufe nach dem
+  Umschalten noch nicht beobachtet → nächste Session `gh run list --workflow=pipeline.yml` prüfen.
+- **Bundestag:** Gesetze + Themen-Suche (8 Knöpfe, `/api/bundestag/suche`) live; Debatten laufen
+  über `gemini-3.5-flash-lite` (Standardmodell 503 bei langen Protokollen) – Sitzung 15.10. live.
+- **Weitblick/Salim-Analyse:** läuft über `gemini-3.5-flash-lite` (eigenes Gratis-Kontingent).
+  Neu: **Bluesky-Stimmung nach Sprachraum** (12 Räume inkl. Arabisch/Hebräisch/Persisch/Russisch/
+  Chinesisch/Japanisch/Turkvölker), Suchbegriffe von Gemini übersetzt, Schrift-Filter. Funktioniert.
+- **GDELT:** von GitHub-Servern nicht erreichbar → Umweg über Worker `/api/intern/gdelt`
+  (Geheimwort `GDELT_UMWEG_SCHLUESSEL` als Worker- + GitHub-Secret). Kommt durch, aber GDELT
+  drosselt oft (429) – Weltpresse-Abgleich klappt nur teilweise. Falls dauerhaft: Pausen erhöhen
+  oder Abfragen über die Woche verteilen und in D1 cachen.
+- GDELT-Zeitraum 30 → 60 Min (30 wird abgelehnt). Kopfzeile zeigt echtes Datum.
+- Offen/bekannt: Feed `times-of-israel` liefert 403; alter Test `test/reel/video.test.ts` lokal rot
+  (ffmpeg-Untertitelfilter); R2 für Reels nicht aktiviert.
+
 ## Bundestag + Weitblick (2026-10-16)
 
 **Update spät abends:** D1-Migration angewendet, 43 echte Gesetze eingespielt,
