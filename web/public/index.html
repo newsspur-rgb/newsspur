@@ -472,6 +472,20 @@
   .ampel.gescheitert { color: var(--red-ink); }
   .ampel.gekippt { color: var(--on-red); background: var(--red); border-color: var(--red); }
   .ampel.in-beratung { color: #9A6B00; }
+  .ampel.beantwortet { color: var(--ink-3); }
+  .such-form { display: flex; gap: 6px; margin-top: 10px; }
+  .such-input {
+    flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); background: var(--paper);
+    border: 2px solid var(--line); padding: 8px 10px;
+  }
+  .such-input:focus-visible { outline: 3px solid var(--red); outline-offset: 1px; }
+  .such-btn {
+    appearance: none; border: 0; cursor: pointer; background: var(--red); color: var(--on-red);
+    font-family: var(--font-body); font-weight: 700; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; padding: 0 14px;
+  }
+  .such-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .such-info { margin: 12px 0 0; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .04em; color: var(--ink-3); }
+  .typ-chip { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--line-soft); padding: 1px 6px; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .ampel.beschlossen { color: #5BD585; }
     :root:not([data-theme="light"]) .ampel.in-beratung { color: #E8B53A; }
@@ -717,6 +731,23 @@
     return li;
   }
 
+  const THEMEN = ['Schuldenbremse', 'Rente', 'Bürgergeld', 'Migration', 'Wehrdienst', 'Mindestlohn', 'Mietpreisbremse', 'Klimaschutz'];
+  const AMPEL_LABEL_SUCHE = Object.assign({ beantwortet: 'Beantwortet' }, AMPEL_LABEL);
+
+  function trefferZeile(t) {
+    const li = el('li');
+    const a = el('a', 'gesetz'); a.href = t.link; a.target = '_blank'; a.rel = 'noopener';
+    const meta = el('div', 'gesetz-meta');
+    const amp = el('span', 'ampel ' + t.ampel); amp.textContent = AMPEL_LABEL_SUCHE[t.ampel] || t.ampel; meta.appendChild(amp);
+    const typ = el('span', 'typ-chip'); typ.textContent = t.typ; meta.appendChild(typ);
+    if (t.initiative.length) { const ini = el('span'); ini.textContent = t.initiative.join(', '); meta.appendChild(ini); }
+    a.appendChild(meta);
+    const ti = el('span', 'gesetz-titel'); ti.textContent = t.titel; a.appendChild(ti);
+    const q = el('span', 'quelle-link'); q.textContent = t.beratungsstand + ' · ' + datumDe(t.aktualisiert.slice(0, 10)) + ' ↗'; a.appendChild(q);
+    li.appendChild(a);
+    return li;
+  }
+
   function debatteBlock(d, offen) {
     const det = el('details', 'debatte');
     det.open = offen;
@@ -764,6 +795,52 @@
       wrap.innerHTML = '';
     }
     viewHead(wrap, 'Bundestag', 'Was beschlossen, abgelehnt oder gekippt wurde – direkt aus der Datenbank des Bundestags (DIP).');
+
+    wrap.appendChild(section('Themen', (sec, lab) => {
+      const note = el('span', 'note'); note.textContent = ' — Gesetze, Anträge und Anfragen zu einem Thema'; lab.appendChild(note);
+      const knoepfe = el('div', 'filter-row');
+      const form = el('form', 'such-form');
+      const input = el('input', 'such-input');
+      input.type = 'search'; input.placeholder = 'Thema suchen, z. B. Schuldenbremse'; input.minLength = 3; input.maxLength = 60;
+      input.setAttribute('aria-label', 'Thema im Bundestag suchen');
+      const btn = el('button', 'such-btn'); btn.type = 'submit'; btn.textContent = 'Suchen';
+      form.appendChild(input); form.appendChild(btn);
+      const ergebnis = el('div');
+
+      const suchen = async (begriff) => {
+        begriff = begriff.trim();
+        if (begriff.length < 3) return;
+        input.value = begriff;
+        knoepfe.querySelectorAll('.filter-btn').forEach((x) => x.classList.toggle('is-active', x.textContent === begriff));
+        ergebnis.innerHTML = '';
+        const info = el('p', 'such-info'); info.textContent = 'Suche im Bundestag …'; ergebnis.appendChild(info);
+        try {
+          const daten = await ladeJson('/api/bundestag/suche?q=' + encodeURIComponent(begriff));
+          info.textContent = daten.treffer.length
+            ? daten.treffer.length + ' neueste Vorgänge zu „' + begriff + '“'
+            : 'Nichts gefunden zu „' + begriff + '“ – anderes Stichwort probieren.';
+          if (daten.treffer.length) {
+            const ul = el('ul', 'gesetze');
+            daten.treffer.forEach((t) => ul.appendChild(trefferZeile(t)));
+            ergebnis.appendChild(ul);
+          }
+        } catch (e) {
+          console.error(e);
+          info.textContent = 'Die Bundestag-Datenbank ist gerade nicht erreichbar.';
+        }
+      };
+
+      THEMEN.forEach((t) => {
+        const b = el('button', 'filter-btn'); b.type = 'button'; b.textContent = t;
+        b.addEventListener('click', () => suchen(t));
+        knoepfe.appendChild(b);
+      });
+      form.addEventListener('submit', (e) => { e.preventDefault(); suchen(input.value); });
+      sec.appendChild(knoepfe); sec.appendChild(form); sec.appendChild(ergebnis);
+      // Direkt-Link, z. B. newsspur.de/?tab=bundestag&thema=Schuldenbremse
+      const startThema = new URLSearchParams(location.search).get('thema');
+      if (startThema) suchen(startThema);
+    }));
 
     wrap.appendChild(section('Gesetze', (sec) => {
       const filter = el('div', 'filter-row');

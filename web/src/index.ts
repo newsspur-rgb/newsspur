@@ -1,6 +1,7 @@
 import { themaZuApi } from './aufbereiten.js';
 import type { VerarbeitetesThema } from './pipelineTypen.js';
 import { bundestagAntwort, weitblickAntwort } from './bundestagWeitblick.js';
+import { bundestagSucheAntwort } from './bundestagSuche.js';
 
 export interface Env {
   ASSETS: Fetcher;
@@ -167,6 +168,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/themen') {
       return themenAntwort(env);
+    }
+    if (url.pathname === '/api/bundestag/suche') {
+      return bundestagSucheAntwort(request);
     }
     if (url.pathname === '/api/bundestag') {
       return bundestagAntwort(env.DB);
