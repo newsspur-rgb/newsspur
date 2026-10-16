@@ -33,3 +33,21 @@ CREATE TABLE IF NOT EXISTS reel_gesendet_heute (
   datum TEXT PRIMARY KEY,
   thema_id TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS bundestag_gesetze (
+  id TEXT PRIMARY KEY,
+  aktualisiert TEXT NOT NULL,
+  daten TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bundestag_debatten (
+  id TEXT PRIMARY KEY,
+  datum TEXT NOT NULL,
+  daten TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS weitblick (
+  woche TEXT PRIMARY KEY,
+  erstellt TEXT NOT NULL,
+  daten TEXT NOT NULL
+);

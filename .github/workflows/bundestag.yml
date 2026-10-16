@@ -1,0 +1,26 @@
+name: Bundestag
+
+on:
+  schedule:
+    # alle 3 Stunden: Gesetze aktualisieren (gratis), max. 1 neues Plenarprotokoll per Gemini
+    - cron: '17 */3 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  lauf:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run bundestag:run
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "pipeline:run": "tsx src/cli.ts",
     "pipeline:demo": "tsx src/demo.ts",
+    "bundestag:run": "tsx src/bundestagCli.ts",
+    "weitblick:run": "tsx src/weitblickCli.ts",
     "pipeline:reel-test": "tsx src/reelDemo.ts"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <title>NEWSSPUR</title>
-<meta name="description" content="Mockup der automatischen Nachrichten-App NEWSSPUR." />
+<meta name="description" content="NEWSSPUR – Nachrichten aus Deutschland, Türkiye und Nahost. Jede Meldung aus mehreren unabhängigen Quellen, dazu Bundestag und Wochenrückblick." />
 <link rel="manifest" href="/manifest.json" />
 <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 <meta name="theme-color" content="#0B0B0B" />
@@ -446,6 +446,109 @@
   }
   .push-btn:disabled { opacity: .5; cursor: default; }
   .push-status { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); text-align: center; }
+
+  /* ---------- bundestag + weitblick ---------- */
+  .view-head { padding: 18px 16px 4px; }
+  .view-title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.04; text-transform: uppercase; }
+  .view-sub { margin: 7px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+  .view-empty { margin: 0; padding: 22px 16px; font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
+
+  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 2px; }
+  .filter-btn {
+    appearance: none; cursor: pointer; background: transparent; color: var(--ink-2);
+    border: 1px solid var(--line-soft); padding: 4px 9px 3px;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  }
+  .filter-btn.is-active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .filter-btn:focus-visible, .wb-select:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+  .ampel {
+    display: inline-flex; align-items: center; gap: 5px; flex: none;
+    font-family: var(--font-mono); font-size: 8.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    padding: 2px 7px 1px; border: 1px solid currentColor;
+  }
+  .ampel::before { content: ""; width: 6px; height: 6px; background: currentColor; }
+  .ampel.beschlossen { color: #1E7A3C; }
+  .ampel.gescheitert { color: var(--red-ink); }
+  .ampel.gekippt { color: var(--on-red); background: var(--red); border-color: var(--red); }
+  .ampel.in-beratung { color: #9A6B00; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .ampel.beschlossen { color: #5BD585; }
+    :root:not([data-theme="light"]) .ampel.in-beratung { color: #E8B53A; }
+  }
+  :root[data-theme="dark"] .ampel.beschlossen { color: #5BD585; }
+  :root[data-theme="dark"] .ampel.in-beratung { color: #E8B53A; }
+
+  .gesetze { list-style: none; margin: 0; padding: 0; }
+  .gesetze li { border-bottom: 1px solid var(--line-soft); }
+  .gesetze li:last-child { border-bottom: 0; }
+  .gesetz { display: flex; flex-direction: column; gap: 6px; padding: 12px 2px; text-decoration: none; color: var(--ink); }
+  .gesetz:hover .gesetz-titel { color: var(--red-ink); }
+  .gesetz:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+  .gesetz-titel { font-weight: 600; font-size: 14px; line-height: 1.4; }
+  .gesetz-abstract { font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+  .gesetz-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-3); }
+
+  .debatte { border: 1px solid var(--line-soft); margin-bottom: 12px; }
+  .debatte > summary {
+    list-style: none; cursor: pointer; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .debatte > summary::-webkit-details-marker { display: none; }
+  .debatte > summary:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+  .debatte-datum { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .debatte-titel { font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 1.15; }
+  .debatte-titel::after { content: " +"; color: var(--red-ink); }
+  .debatte[open] .debatte-titel::after { content: " –"; }
+  .debatte-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 14px; }
+  .debatte-body p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+  .top { border-top: 2px solid var(--line); padding-top: 11px; display: flex; flex-direction: column; gap: 8px; }
+  .top-thema { font-weight: 700; font-size: 14.5px; }
+  .positionen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .positionen li { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.45; }
+  .fraktion {
+    font-family: var(--font-mono); font-size: 8.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--paper); background: var(--ink); padding: 2px 6px; white-space: nowrap;
+  }
+  .top-ergebnis { font-family: var(--font-mono); font-size: 10px; color: var(--ink); }
+  .top-ergebnis b { color: var(--red-ink); font-weight: 600; }
+  .quelle-link { font-family: var(--font-mono); font-size: 9.5px; color: var(--red-ink); text-decoration: none; }
+  .quelle-link:hover { text-decoration: underline; }
+
+  .wb-select {
+    appearance: none; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 5px 10px; margin-top: 10px; cursor: pointer;
+  }
+  .methode {
+    margin: 16px 16px 0; padding: 12px 14px; border: 2px solid var(--line);
+    font-size: 12.5px; line-height: 1.5; color: var(--ink-2);
+  }
+  .methode b { color: var(--ink); }
+  .entwicklung { padding: 18px 16px 0; display: flex; flex-direction: column; gap: 9px; }
+  .entwicklung + .entwicklung { border-top: 2px solid var(--line); margin-top: 18px; }
+  .entwicklung-nr { font-family: var(--font-mono); font-size: 10px; color: var(--red-ink); font-weight: 600; letter-spacing: .1em; }
+  .entwicklung h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 22px; line-height: 1.14; text-wrap: balance; }
+  .entwicklung .kurz { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); white-space: pre-line; }
+  .welt { border: 1px solid var(--line-soft); padding: 12px 13px; display: flex; flex-direction: column; gap: 8px; }
+  .welt-kopf { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .welt-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
+  .urteil { font-family: var(--font-mono); font-size: 8.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px 1px; border: 1px solid currentColor; }
+  .urteil.deckungsgleich { color: #1E7A3C; }
+  .urteil.teilweise { color: #9A6B00; }
+  .urteil.widerspruechlich { color: var(--on-red); background: var(--red); border-color: var(--red); }
+  .urteil.kaum-berichtet { color: var(--ink-3); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .urteil.deckungsgleich { color: #5BD585; }
+    :root:not([data-theme="light"]) .urteil.teilweise { color: #E8B53A; }
+  }
+  :root[data-theme="dark"] .urteil.deckungsgleich { color: #5BD585; }
+  :root[data-theme="dark"] .urteil.teilweise { color: #E8B53A; }
+  .welt-laender { font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-3); line-height: 1.6; }
+  .welt p { margin: 0; font-size: 13.5px; line-height: 1.5; white-space: pre-line; }
+  .welt details summary { cursor: pointer; font-family: var(--font-mono); font-size: 9.5px; color: var(--red-ink); }
+  .belege { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .belege a { font-size: 12px; line-height: 1.4; color: var(--ink-2); text-decoration: none; }
+  .belege a:hover { color: var(--red-ink); }
+  .belege span { font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -473,6 +576,8 @@
         <button class="tab" data-tab="deutschland">Deutschland</button>
         <button class="tab" data-tab="tuerkei">Türkiye</button>
         <button class="tab" data-tab="nahost">Nahost</button>
+        <button class="tab" data-tab="bundestag">Bundestag</button>
+        <button class="tab" data-tab="weitblick">Weitblick</button>
       </nav>
     </header>
 
@@ -480,7 +585,7 @@
       <p class="feed-date">Montag · 1. September 2026 · <span id="upd">aktualisiert vor 6 Min</span></p>
       <div id="cards"></div>
       <p class="held" id="held"></p>
-      <p class="legal">NEWSSPUR · automatischer Nachrichten-Dienst · Demo-Ansicht mit Beispielmeldungen</p>
+      <p class="legal">NEWSSPUR · automatischer Nachrichten-Dienst · Meldungen aus mehreren Quellen zusammengefasst, Originale stets verlinkt</p>
     </main>
 
     <!-- ============ DETAIL ============ -->
@@ -552,6 +657,9 @@
   function renderFeed(tab) {
     const wrap = $('#cards');
     wrap.innerHTML = '';
+    $('#held').hidden = tab === 'bundestag' || tab === 'weitblick';
+    if (tab === 'bundestag') return renderBundestag(wrap);
+    if (tab === 'weitblick') return renderWeitblick(wrap);
     const list = STORIES.filter((s) => tab === 'alle' || katsOf(s).includes(tab));
     list.forEach((s, i) => {
       const c = card(s);
@@ -564,6 +672,208 @@
     held.appendChild(b);
     held.appendChild(document.createTextNode(HELD_TXT));
   }
+
+  // ---------- Bundestag + Weitblick ----------
+  const AMPEL_LABEL = { beschlossen: 'Beschlossen', gescheitert: 'Gescheitert', gekippt: 'Gekippt', 'in-beratung': 'In Beratung' };
+  const URTEIL_LABEL = { deckungsgleich: 'Deckungsgleich', teilweise: 'Teilweise bestätigt', widerspruechlich: 'Widersprüchlich', 'kaum-berichtet': 'Kaum berichtet' };
+  const FRAKTION_KURZ = { 'BÜNDNIS 90/DIE GRÜNEN': 'Grüne' };
+  let BUNDESTAG = null;
+  let WEITBLICK = null;
+  let gesetzFilter = 'alle';
+
+  function datumDe(iso) {
+    if (!iso) return '';
+    const d = new Date(iso.length === 10 ? iso + 'T12:00:00' : iso);
+    return isNaN(d) ? iso : d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  async function ladeJson(url) {
+    const antwort = await fetch(url);
+    if (!antwort.ok) throw new Error(url + ' antwortete mit ' + antwort.status);
+    return antwort.json();
+  }
+
+  function viewHead(wrap, titel, sub) {
+    const head = el('div', 'view-head');
+    const h = el('h2', 'view-title'); h.textContent = titel; head.appendChild(h);
+    if (sub) { const p = el('p', 'view-sub'); p.textContent = sub; head.appendChild(p); }
+    wrap.appendChild(head);
+    return head;
+  }
+
+  function leer(wrap, text) { const p = el('p', 'view-empty'); p.textContent = text; wrap.appendChild(p); }
+
+  function gesetzZeile(g) {
+    const li = el('li');
+    const a = el('a', 'gesetz'); a.href = g.link; a.target = '_blank'; a.rel = 'noopener';
+    const meta = el('div', 'gesetz-meta');
+    const amp = el('span', 'ampel ' + g.ampel); amp.textContent = AMPEL_LABEL[g.ampel] || g.ampel; meta.appendChild(amp);
+    const stand = el('span'); stand.textContent = g.beratungsstand + (g.verkuendetAm ? ' am ' + datumDe(g.verkuendetAm) : ''); meta.appendChild(stand);
+    a.appendChild(meta);
+    const t = el('span', 'gesetz-titel'); t.textContent = g.titel; a.appendChild(t);
+    if (g.abstract) { const ab = el('span', 'gesetz-abstract'); ab.textContent = g.abstract.length > 220 ? g.abstract.slice(0, 220) + ' …' : g.abstract; a.appendChild(ab); }
+    const q = el('span', 'quelle-link'); q.textContent = 'Vorgang im Bundestag ↗ · aktualisiert ' + relativZeit(g.aktualisiert); a.appendChild(q);
+    li.appendChild(a);
+    return li;
+  }
+
+  function debatteBlock(d, offen) {
+    const det = el('details', 'debatte');
+    det.open = offen;
+    const sum = el('summary');
+    const dt = el('span', 'debatte-datum'); dt.textContent = datumDe(d.datum); sum.appendChild(dt);
+    const t = el('span', 'debatte-titel'); t.textContent = d.titel.replace(/^Protokoll der /, ''); sum.appendChild(t);
+    det.appendChild(sum);
+    const body = el('div', 'debatte-body');
+    const ue = el('p'); ue.textContent = d.ueberblick; body.appendChild(ue);
+    d.punkte.forEach((p) => {
+      const top = el('div', 'top');
+      const th = el('span', 'top-thema'); th.textContent = p.thema; top.appendChild(th);
+      const w = el('p'); w.textContent = p.worum; top.appendChild(w);
+      const ul = el('ul', 'positionen');
+      p.positionen.forEach((pos) => {
+        const li = el('li');
+        const f = el('span', 'fraktion'); f.textContent = FRAKTION_KURZ[pos.fraktion] || pos.fraktion; li.appendChild(f);
+        const s = el('span'); s.textContent = pos.aussage; li.appendChild(s);
+        ul.appendChild(li);
+      });
+      top.appendChild(ul);
+      const erg = el('span', 'top-ergebnis'); const eb = el('b'); eb.textContent = 'Ergebnis: '; erg.appendChild(eb);
+      erg.appendChild(document.createTextNode(p.ergebnis)); top.appendChild(erg);
+      body.appendChild(top);
+    });
+    const link = el('a', 'quelle-link'); link.href = d.link; link.target = '_blank'; link.rel = 'noopener';
+    link.textContent = 'Amtliches Plenarprotokoll ↗' + (d.gekuerzt ? ' · sehr lange Sitzung, KI-Zusammenfassung aus dem ersten Teil' : '');
+    body.appendChild(link);
+    det.appendChild(body);
+    return det;
+  }
+
+  function gesetzListe(gesetze) {
+    const ul = el('ul', 'gesetze');
+    gesetze.forEach((g) => ul.appendChild(gesetzZeile(g)));
+    return ul;
+  }
+
+  async function renderBundestag(wrap) {
+    if (!BUNDESTAG) {
+      leer(wrap, 'Lade Daten aus dem Bundestag …');
+      try { BUNDESTAG = await ladeJson('/api/bundestag'); }
+      catch (e) { console.error(e); wrap.innerHTML = ''; return leer(wrap, 'Bundestag-Daten konnten nicht geladen werden.'); }
+      if (aktiverTab() !== 'bundestag') return;
+      wrap.innerHTML = '';
+    }
+    viewHead(wrap, 'Bundestag', 'Was beschlossen, abgelehnt oder gekippt wurde – direkt aus der Datenbank des Bundestags (DIP).');
+
+    wrap.appendChild(section('Gesetze', (sec) => {
+      const filter = el('div', 'filter-row');
+      const liste = el('div');
+      const zeichne = () => {
+        liste.innerHTML = '';
+        const auswahl = BUNDESTAG.gesetze.filter((g) => gesetzFilter === 'alle' || g.ampel === gesetzFilter || (gesetzFilter === 'gescheitert' && g.ampel === 'gekippt'));
+        if (auswahl.length) liste.appendChild(gesetzListe(auswahl));
+        else { const p = el('p', 'view-sub'); p.textContent = 'Keine Gesetze in dieser Auswahl.'; liste.appendChild(p); }
+      };
+      [['alle', 'Alle'], ['beschlossen', 'Beschlossen'], ['gescheitert', 'Gescheitert / gekippt'], ['in-beratung', 'In Beratung']].forEach(([wert, text]) => {
+        const b = el('button', 'filter-btn' + (gesetzFilter === wert ? ' is-active' : ''));
+        b.type = 'button'; b.textContent = text;
+        b.addEventListener('click', () => {
+          gesetzFilter = wert;
+          filter.querySelectorAll('.filter-btn').forEach((x) => x.classList.toggle('is-active', x === b));
+          zeichne();
+        });
+        filter.appendChild(b);
+      });
+      sec.appendChild(filter);
+      sec.appendChild(liste);
+      if (BUNDESTAG.gesetze.length) zeichne();
+      else { const p = el('p', 'view-sub'); p.textContent = 'Noch keine Gesetze geladen – der nächste Abruf läuft in spätestens 3 Stunden.'; sec.appendChild(p); }
+    }));
+
+    wrap.appendChild(section('Debatten im Plenum', (sec, lab) => {
+      const note = el('span', 'note'); note.textContent = ' — KI-Zusammenfassung des amtlichen Protokolls'; lab.appendChild(note);
+      if (!BUNDESTAG.debatten.length) { const p = el('p', 'view-sub'); p.textContent = 'Noch keine Sitzung zusammengefasst.'; sec.appendChild(p); return; }
+      BUNDESTAG.debatten.forEach((d, i) => sec.appendChild(debatteBlock(d, i === 0)));
+    }));
+  }
+
+  function weltBlock(w) {
+    const box = el('div', 'welt');
+    const kopf = el('div', 'welt-kopf');
+    const lab = el('span', 'welt-label'); lab.textContent = 'Weltpresse-Abgleich'; kopf.appendChild(lab);
+    const u = el('span', 'urteil ' + w.urteil); u.textContent = URTEIL_LABEL[w.urteil] || w.urteil; kopf.appendChild(u);
+    box.appendChild(kopf);
+    if (w.laender.length) { const l = el('span', 'welt-laender'); l.textContent = w.laender.length + (w.laender.length === 1 ? ' Land: ' : ' Länder: ') + w.laender.join(' · '); box.appendChild(l); }
+    const p = el('p'); p.textContent = w.uebereinstimmung; box.appendChild(p);
+    if (w.abweichungen.length) {
+      const ul = el('ul', 'disputes');
+      w.abweichungen.forEach((a) => { const li = el('li'); li.textContent = a; ul.appendChild(li); });
+      box.appendChild(ul);
+    }
+    if (w.belege.length) {
+      const det = el('details');
+      const s = el('summary'); s.textContent = 'Alle ' + w.belege.length + ' Schlagzeilen ansehen'; det.appendChild(s);
+      const ul = el('ul', 'belege');
+      w.belege.forEach((b) => {
+        const li = el('li');
+        const a = el('a'); a.href = b.url; a.target = '_blank'; a.rel = 'noopener';
+        const sp = el('span'); sp.textContent = b.land + ' · ' + b.medium; a.appendChild(sp);
+        a.appendChild(document.createTextNode(b.titel));
+        li.appendChild(a); ul.appendChild(li);
+      });
+      det.appendChild(ul);
+      box.appendChild(det);
+    }
+    return box;
+  }
+
+  async function renderWeitblick(wrap, woche) {
+    if (!WEITBLICK || woche) {
+      leer(wrap, 'Lade Wochenrückblick …');
+      try { WEITBLICK = await ladeJson('/api/weitblick' + (woche ? '?woche=' + encodeURIComponent(woche) : '')); }
+      catch (e) { console.error(e); wrap.innerHTML = ''; return leer(wrap, 'Der Wochenrückblick konnte nicht geladen werden.'); }
+      if (aktiverTab() !== 'weitblick') return;
+      wrap.innerHTML = '';
+    }
+    const wb = WEITBLICK.weitblick;
+    if (!wb) {
+      viewHead(wrap, 'Weitblick', 'Der Wochenrückblick mit Weltpresse-Abgleich.');
+      return leer(wrap, 'Der erste Weitblick erscheint am Sonntagabend.');
+    }
+
+    const kw = wb.woche.split('-W')[1];
+    const head = viewHead(wrap, 'Weitblick · KW ' + Number(kw), datumDe(wb.von) + ' – ' + datumDe(wb.bis));
+    if (WEITBLICK.wochen.length > 1) {
+      const sel = el('select', 'wb-select'); sel.setAttribute('aria-label', 'Woche wählen');
+      WEITBLICK.wochen.forEach((w) => { const o = el('option'); o.value = w; o.textContent = 'KW ' + Number(w.split('-W')[1]) + ' / ' + w.slice(0, 4); o.selected = w === wb.woche; sel.appendChild(o); });
+      sel.addEventListener('change', () => { wrap.innerHTML = ''; renderWeitblick(wrap, sel.value); });
+      head.appendChild(sel);
+    }
+
+    const ein = el('p', 'view-sub'); ein.textContent = wb.einleitung; ein.style.padding = '8px 16px 0'; ein.style.margin = '0'; wrap.appendChild(ein);
+
+    const m = el('div', 'methode');
+    const mb = el('b'); mb.textContent = 'So prüfen wir: '; m.appendChild(mb);
+    m.appendChild(document.createTextNode('Jede Entwicklung wird mit Medien aus weit entfernten Ländern ohne eigenes Interesse abgeglichen – etwa Indien, Brasilien, Kenia oder Papua-Neuguinea. Nur was dort übereinstimmend berichtet wird, gilt als gesichert. Grundlage sind die Schlagzeilen (über GDELT).'));
+    wrap.appendChild(m);
+
+    wb.entwicklungen.forEach((e, i) => {
+      const box = el('div', 'entwicklung');
+      const nr = el('span', 'entwicklung-nr'); nr.textContent = String(i + 1).padStart(2, '0') + ' · ' + (KAT_LABEL[e.kategorie] || e.kategorie); box.appendChild(nr);
+      const h = el('h3'); h.textContent = e.titel; box.appendChild(h);
+      const k = el('p', 'kurz'); k.textContent = e.kurz; box.appendChild(k);
+      box.appendChild(weltBlock(e.weltblick));
+      wrap.appendChild(box);
+    });
+
+    if (wb.gesetze.length) {
+      const sec = section('Gesetze der Woche', (s) => s.appendChild(gesetzListe(wb.gesetze)));
+      sec.style.borderTop = '2px solid var(--line)'; sec.style.marginTop = '18px';
+      wrap.appendChild(sec);
+    }
+  }
+
+  function aktiverTab() { const b = $('#tabs .tab.is-active'); return b ? b.dataset.tab : 'alle'; }
 
   function spurEl(n, katClass) {
     const w = el('span', 'spur ' + katClass);
@@ -845,6 +1155,8 @@
 
   let startTab = 'alle';
   try { startTab = localStorage.getItem('newsspur-tab') || 'alle'; } catch (e) {}
+  // Direkt-Link, z. B. newsspur.de/?tab=weitblick
+  startTab = new URLSearchParams(location.search).get('tab') || startTab;
   const startBtn = $('#tabs').querySelector('[data-tab="' + startTab + '"]') || $('#tabs').querySelector('.tab');
   $('#tabs').querySelectorAll('.tab').forEach((t) => t.classList.toggle('is-active', t === startBtn));
 

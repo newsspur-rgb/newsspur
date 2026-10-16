@@ -18,12 +18,14 @@
       "database_id": "05b07341-c56c-4942-bd68-323d81131e35"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "REELS",
-      "bucket_name": "newsspur-reels"
-    }
-  ],
+  // R2 ist im Cloudflare-Konto noch nicht aktiviert (Dashboard -> R2). Danach
+  // `npx wrangler r2 bucket create newsspur-reels` und diesen Block wieder einkommentieren.
+  // "r2_buckets": [
+  //   {
+  //     "binding": "REELS",
+  //     "bucket_name": "newsspur-reels"
+  //   }
+  // ],
   "routes": [
     {
       "pattern": "newsspur.de",

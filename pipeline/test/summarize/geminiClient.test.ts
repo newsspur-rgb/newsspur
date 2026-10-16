@@ -19,6 +19,29 @@ describe('erstelleGeminiClient', () => {
     await expect(client.strukturierteAntwort('p', {})).rejects.toThrow('500');
   });
 
+  it('wiederholt bei 503 und liefert die spätere Antwort', async () => {
+    const antworten = [503, 503, 200];
+    const fetchImpl = vi.fn(async () => {
+      const status = antworten.shift()!;
+      return { ok: status < 400, status, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"a":1}' }] } }] }) };
+    }) as unknown as typeof fetch;
+    const client = erstelleGeminiClient('k', fetchImpl, [0, 0]);
+    expect(await client.strukturierteAntwort('p', {})).toEqual({ a: 1 });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it('gibt nach den Wiederholungen bei dauerhaftem 503 auf', async () => {
+    const fetchImpl = fakeFetch('', 503);
+    await expect(erstelleGeminiClient('k', fetchImpl, [0, 0]).strukturierteAntwort('p', {})).rejects.toThrow('503');
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it('wiederholt andere Fehler (z. B. 429) nicht', async () => {
+    const fetchImpl = fakeFetch('', 429);
+    await expect(erstelleGeminiClient('k', fetchImpl, [0, 0]).strukturierteAntwort('p', {})).rejects.toThrow('429');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it('wirft einen Fehler, wenn kein Text in der Antwort steht', async () => {
     const fetchImpl = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) })) as unknown as typeof fetch;
     const client = erstelleGeminiClient('k', fetchImpl);

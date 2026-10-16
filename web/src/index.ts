@@ -1,10 +1,12 @@
 import { themaZuApi } from './aufbereiten.js';
 import type { VerarbeitetesThema } from './pipelineTypen.js';
+import { bundestagAntwort, weitblickAntwort } from './bundestagWeitblick.js';
 
 export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
-  REELS: R2Bucket;
+  /** Fehlt, solange R2 im Cloudflare-Konto nicht aktiviert ist (siehe wrangler.jsonc). */
+  REELS?: R2Bucket;
   VAPID_PUBLIC_KEY?: string;
 }
 
@@ -28,6 +30,7 @@ async function karteAntwort(env: Env, themaId: string): Promise<Response> {
 }
 
 async function reelAntwort(env: Env, themaId: string): Promise<Response> {
+  if (!env.REELS) return new Response('Nicht gefunden', { status: 404 });
   const objekt = await env.REELS.get(`${themaId}.mp4`);
   if (!objekt) return new Response('Nicht gefunden', { status: 404 });
   return new Response(objekt.body, {
@@ -164,6 +167,12 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/themen') {
       return themenAntwort(env);
+    }
+    if (url.pathname === '/api/bundestag') {
+      return bundestagAntwort(env.DB);
+    }
+    if (url.pathname === '/api/weitblick') {
+      return weitblickAntwort(env.DB, url.searchParams.get('woche'));
     }
     if (url.pathname === '/api/reaktion' && request.method === 'POST') {
       return reaktionAntwort(env, request);

@@ -1,5 +1,42 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## Bundestag + Weitblick gebaut, noch NICHT live (2026-10-16)
+
+**ACHTUNG – wichtigster offener Punkt:** GitHub startet seit dem 2026-10-03 keinen
+Action-Lauf mehr („recent account payments have failed or your spending limit
+needs to be increased“). Privates Repo hat das Gratis-Kontingent verbraucht →
+newsspur.de bekommt seit ~2 Wochen keine neuen Meldungen. Gratis-Lösung: Repo
+öffentlich machen (Actions für öffentliche Repos unbegrenzt gratis, Secrets bleiben
+geheim). Entscheidung liegt beim Nutzer. Ohne das laufen auch Bundestag/Weitblick nicht.
+
+**Neu (Code fertig, alle neuen Tests grün, lokal per Screenshot geprüft):**
+- **Bundestag-Tab** (`pipeline/src/bundestag/`, Workflow `bundestag.yml`, alle 3 h):
+  Gesetze aus der DIP-API des Bundestags (öffentlicher Key, gültig bis Ende Mai 2027,
+  `OEFFENTLICHER_DIP_KEY`) mit Ampel beschlossen/gescheitert/gekippt/in Beratung + Filter.
+  Debatten: max. 1 neues Plenarprotokoll pro Lauf per Gemini (gekürzt auf 400k Zeichen).
+- **Weitblick-Tab** (`pipeline/src/weitblick/`, Workflow `weitblick.yml`, So 16:00 UTC):
+  Wochenrückblick, 5 Entwicklungen + Gesetze der Woche. Jede Entwicklung wird nach
+  Salim Samatous Recherche-Methode (YouTube-Short „Wie recherchiert Salim?“) mit
+  Schlagzeilen aus 20 unbeteiligten Ländern (GDELT, `neutraleLaender.ts`) abgeglichen →
+  Urteil deckungsgleich/teilweise/widersprüchlich/kaum berichtet. 2 Gemini-Aufrufe/Woche.
+  GDELT: max. 10 Länder pro Abfrage (sonst „query too long“), 7 s Pause.
+- Web: `/api/bundestag`, `/api/weitblick?woche=`, 2 neue Tabs, Direkt-Links `/?tab=weitblick`.
+- Gemini-Client wiederholt bei 503 („high demand“) 2× (20 s / 60 s).
+- 3 neue D1-Tabellen in `pipeline/src/store/schema.sql`.
+
+**Nicht live geprüft:** Gemini-Debattenzusammenfassung (Google antwortete am 16.10.
+abends bei großen Anfragen dauerhaft 503) und GDELT-Weltpresse (lokale IP nach
+Tests gedrosselt, 429). Beides beim ersten GitHub-Lauf prüfen (`gh run view`).
+
+**Offene Schritte (brauchen OK des Nutzers):** GitHub-Actions wieder zum Laufen
+bringen → D1-Migration (`cd web && npx wrangler d1 execute newsspur --remote
+--file=../pipeline/src/store/schema.sql`) → `npx wrangler deploy` → Commit + Push →
+Workflows „Bundestag“ und „Weitblick“ einmal per `gh workflow run` starten.
+
+**Nebenbei gesehen:** Kopfzeile im Feed zeigt fest „Montag · 1. September 2026 ·
+aktualisiert vor 6 Min“ (Mockup-Rest). Alter Test `test/reel/video.test.ts` scheitert
+lokal am ffmpeg-Untertitelfilter (unabhängig von dieser Änderung).
+
 ## Wichtiger Bugfix: Pipeline lief seit Stunden nicht mehr (2026-09-14, spät)
 
 Ursache für die anhaltenden `Gemini-Embedding antwortete mit Status 429`-
