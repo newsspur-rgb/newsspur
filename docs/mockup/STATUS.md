@@ -1,22 +1,36 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-## NÄCHSTER SCHRITT (beschlossen 17.10., noch nicht gebaut): Konflikte über X-Listen ausbauen
+## Etappe 1 fertig (17.10. nachmittags, Commit `de14562`, noch nicht gepusht/deployed): Gaza + Video-Vorschau
 
-Nutzerwunsch: alle Kriege, Gaza als eigenes Feld, israelische Regierung inkl. Videos, ALLE Minister jeder Seite.
-Problem: X-Suche verträgt max. ~16 Konten (`from:`), und nach ~10 Suchen kommt 429.
+Umgesetzt: neuer Konflikt **Gaza** (Israel ↔ Palästinenser ↔ UN/Helfer; Hamas hat kein verifiziertes X-Konto,
+deshalb WAFA/Palestine_UN/PalestineMOFA als Palästinenser-Stimme, Handles per `opencli twitter profile` geprüft).
+`Tweet`/`KonfliktBeleg`/`XStimme` um `posterUrl` + `istVideo` erweitert (Video = `.mp4` in `media_urls`, sonst Bild).
+Vorschaubild mit ▶ bei Video im Konflikte-Tab und bei X-Stimmen, Klick öffnet den Original-Post auf X. Keine
+D1-Migration nötig (JSON-Feld). Tests ergänzt (vitest, alle grün bis auf den bekannten alten `video.test.ts`-Fall),
+`tsc --noEmit` sauber (pipeline + web), per Mock-Server + Browser-Screenshot geprüft.
+
+**Offen vor dem Deploy:** `wrangler deploy`, Push, `git -C ~/newsspur-x pull` (Freigabe beim Nutzer einholen).
+**Offen, noch nicht gefragt:** Es gibt noch gar keine Datenschutzerklärung auf newsspur.de – die Vorschaubilder laden
+jetzt direkt von pbs.twimg.com/video.twimg.com (zeigt dem Nutzer-Browser die Besucher-IP). Nutzer am 17.10. erwähnt,
+dafür "einen Satz" zu ergänzen – das setzt aber voraus, dass es überhaupt eine Seite dafür gibt. Nutzer fragen, ob
+eine Datenschutzerklärung erstellt werden soll.
+
+## NÄCHSTER SCHRITT (Etappe 2, noch nicht gebaut): X-Listen + weitere Kriege
+
+Nutzerwunsch: israelische Regierung inkl. ALLE Minister jeder Seite, weitere Kriege.
+Problem: X-Suche verträgt max. ~16 Konten (`from:`), und nach ~10 Suchen kommt 429. Gaza passt mit 9 Konten noch
+in eine normale `from:`-Suche; für "ALLE Minister" braucht es die X-Listen-Lösung.
 **Entscheidungen des Nutzers (17.10.):**
 - JA: private X-Listen auf @Newsspur_ anlegen + Konten hinzufügen (`opencli twitter list-create --private?`,
   `list-add-batch <listId> <a,b,c>`, Lesen per `opencli twitter list-tweets <listId> -f json`). Nichts posten/folgen.
-- Videos: Vorschaubild (`media_posters` aus OpenCLI) mit ▶, Klick öffnet Tweet auf X. Bild kommt von pbs.twimg.com →
-  einen Satz in die Datenschutzerklärung aufnehmen.
 **Plan:**
-1. Eine private Liste je Kriegspartei (z. B. „NS Israel Regierung“ mit allen Ministern, IDF, Ministerien), Listen-IDs in
-   `konflikte.ts` statt Handle-Listen (Handles bleiben für Seiten-Zuordnung/Anzeigenamen). Pro Seite 1 Abfrage.
-2. Neuer Konflikt **Gaza**: Israel ↔ Hamas/Palästinenser (PA, Gaza-Behörden) ↔ UN/Helfer. Bisheriges „Iran↔USA↔Israel“ bleibt.
-3. Weitere Kriege: Sudan (SAF ↔ RSF), Israel ↔ Libanon/Hisbollah, Pakistan ↔ Indien, DR Kongo ↔ Ruanda/M23,
+1. Eine private Liste je Kriegspartei mit sehr vielen Konten (z. B. „NS Israel Regierung“ mit allen Ministern, IDF,
+   Ministerien), Listen-ID zusätzlich zu den Handles in `konflikte.ts` (Handles bleiben für Seiten-Zuordnung/Anzeigenamen).
+   Vorsicht: pro zusätzlicher Liste/Suche steigt das Risiko, dass X nach ~10 Suchen pro Lauf drosselt (429) – beim
+   Einbauen die Gesamtzahl der Suchen pro Lauf im Blick behalten, ggf. Takt/Pausen anpassen.
+2. Weitere Kriege: Sudan (SAF ↔ RSF), Israel ↔ Libanon/Hisbollah, Pakistan ↔ Indien, DR Kongo ↔ Ruanda/M23,
    Armenien ↔ Aserbaidschan. Handles vor dem Eintragen per `opencli twitter profile <handle>` prüfen.
-4. Tweet-Typ um `media` (Poster-URL, istVideo) erweitern; ALLE geteilten Videos der Seiten (v. a. Israel) sichtbar machen: Vorschaubild mit ▶ in Konflikte + X-Stimmen, Klick öffnet das Video auf X. Nutzer betont 17.10.: „Videos mit einfügen, damit die Leser das sehen“.
-5. Testen (vitest), echter Lauf über launchd, Screenshot, `wrangler deploy`, Commit + Push, `git -C ~/newsspur-x pull`.
+3. Testen (vitest), echter Lauf über launchd, Screenshot, `wrangler deploy`, Commit + Push, `git -C ~/newsspur-x pull`.
 
 ## X-Stimmen (Tweets-Abteilung) – live seit 2026-10-17
 
