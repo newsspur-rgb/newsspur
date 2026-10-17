@@ -51,3 +51,11 @@ CREATE TABLE IF NOT EXISTS weitblick (
   erstellt TEXT NOT NULL,
   daten TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS x_stimmen (
+  id TEXT PRIMARY KEY,
+  kategorie TEXT NOT NULL,
+  thema_id TEXT,
+  aktualisiert TEXT NOT NULL,
+  daten TEXT NOT NULL
+);

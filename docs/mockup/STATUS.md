@@ -1,5 +1,20 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## X-Stimmen (Tweets-Abteilung) – live seit 2026-10-17
+
+- **Was:** Reiter „X-Stimmen“ auf newsspur.de + Abschnitt „Stimmen auf X“ in passenden Meldungen.
+  Posts geprüfter Konten (Liste: `pipeline/src/xstimmen/konten.ts`, je DE/TR/Nahost) werden per
+  Gemini (`gemini-3.5-flash-lite`) zu max. 5 Themen je Kategorie gebündelt, „Wer sagt was“, Original verlinkt.
+  Offene X-Suche bewusst nicht genutzt (fast nur Spam/Spendenaufrufe).
+- **Läuft NUR auf dem Mac** (X gratis nur über OpenCLI im eingeloggten Chrome, Konto @Newsspur_):
+  launchd `~/Library/LaunchAgents/de.newsspur.x-stimmen.plist`, alle 3 Std → `pipeline/scripts/x-lauf.sh`
+  → `npm run x:run`. Log: `~/Library/Logs/newsspur-x.log`. Mac zu/Chrome zu = kein Lauf (wird übersprungen).
+  Abschalten: `launchctl bootout gui/$(id -u)/de.newsspur.x-stimmen`.
+- D1-Tabelle `x_stimmen`, Worker-Route `/api/x` (letzte 3 Tage). Kosten: 0 € (3 X-Suchen + 3 Gemini-Aufrufe/Lauf).
+- **X drosselt** bei vielen Suchen (429, 15–30 Min). Deshalb 60 s Pause zwischen den 3 Suchen; nicht oft manuell starten.
+- Erster Lauf 17.10.: 5 Deutschland-Themen live; Türkei/Nahost wegen 429 (nach Tests) leer → kommen beim nächsten Lauf.
+- Offen: Handles der TR/Nahost-Liste nicht einzeln geprüft (falsche Handles liefern einfach nichts).
+
 ## Stand Sessionende 2026-10-16, ~22 Uhr
 
 - **Repo ist öffentlich** (Nutzer-OK) → GitHub Actions laufen wieder gratis. Vorher Historie

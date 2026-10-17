@@ -542,6 +542,10 @@
   .entwicklung-nr { font-family: var(--font-mono); font-size: 10px; color: var(--red-ink); font-weight: 600; letter-spacing: .1em; }
   .entwicklung h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 22px; line-height: 1.14; text-wrap: balance; }
   .entwicklung .kurz { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); white-space: pre-line; }
+  .stmt-text { margin: 6px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+  .x-link { align-self: flex-start; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--red-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
+  .x-link:hover { text-decoration: underline; }
+  .x-link:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
   .welt { border: 1px solid var(--line-soft); padding: 12px 13px; display: flex; flex-direction: column; gap: 8px; }
   .welt-kopf { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .welt-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
@@ -610,6 +614,7 @@
         <button class="tab" data-tab="nahost">Nahost</button>
         <button class="tab" data-tab="bundestag">Bundestag</button>
         <button class="tab" data-tab="weitblick">Weitblick</button>
+        <button class="tab" data-tab="x">X-Stimmen</button>
       </nav>
     </header>
 
@@ -689,9 +694,10 @@
   function renderFeed(tab) {
     const wrap = $('#cards');
     wrap.innerHTML = '';
-    $('#held').hidden = tab === 'bundestag' || tab === 'weitblick';
+    $('#held').hidden = tab === 'bundestag' || tab === 'weitblick' || tab === 'x';
     if (tab === 'bundestag') return renderBundestag(wrap);
     if (tab === 'weitblick') return renderWeitblick(wrap);
+    if (tab === 'x') return renderX(wrap);
     const list = STORIES.filter((s) => tab === 'alle' || katsOf(s).includes(tab));
     list.forEach((s, i) => {
       const c = card(s);
@@ -1005,6 +1011,53 @@
     }
   }
 
+  // ---------- X-Stimmen ----------
+  let XTHEMEN = [];
+  const X_HINWEIS = 'Aussagen auf X, nicht unabhängig geprüft';
+
+  function xStimmenListe(stimmen) {
+    const ul = el('ul', 'statements');
+    stimmen.forEach((st) => {
+      const li = el('li');
+      const head = el('div', 'stmt-head');
+      const akteur = el('span', 'stmt-akteur'); akteur.textContent = st.konto; head.appendChild(akteur);
+      const person = el('span', 'stmt-person'); person.textContent = '@' + st.autor; head.appendChild(person);
+      li.appendChild(head);
+      const z = el('p', 'stmt-zitat'); z.textContent = st.kernaussage; li.appendChild(z);
+      const t = el('p', 'stmt-text'); t.textContent = '„' + st.text + '“'; li.appendChild(t);
+      const beleg = el('div', 'stmt-beleg');
+      const zeit = el('span'); zeit.textContent = 'X · ' + relativZeit(st.zeit); beleg.appendChild(zeit);
+      const a = el('a'); a.href = st.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Original-Post ↗';
+      beleg.appendChild(a);
+      li.appendChild(beleg);
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  async function renderX(wrap) {
+    viewHead(wrap, 'X-Stimmen', 'Worüber Regierungen, Parteien und Behörden auf X sprechen – zusammengefasst.');
+    const m = el('div', 'methode');
+    const mb = el('b'); mb.textContent = 'So arbeiten wir: '; m.appendChild(mb);
+    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten (z. B. Bundeskanzler, Ministerien, Parteien, türkisches Präsidialamt, israelische und iranische Regierung, UN-Organisationen). Eine KI bündelt sie zu Themen und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
+    wrap.appendChild(m);
+    if (!XTHEMEN.length) return leer(wrap, 'Gerade keine X-Stimmen – der nächste Lauf kommt in wenigen Stunden.');
+    XTHEMEN.forEach((x) => {
+      const box = el('div', 'entwicklung');
+      const nr = el('span', 'entwicklung-nr'); nr.textContent = (KAT_LABEL[x.kategorie] || x.kategorie) + ' · ' + relativZeit(x.aktualisiert); box.appendChild(nr);
+      const h = el('h3'); h.textContent = x.titel; box.appendChild(h);
+      const k = el('p', 'kurz'); k.textContent = x.zusammenfassung; box.appendChild(k);
+      const meldung = x.themaId && STORIES.find((s) => s.id === x.themaId);
+      if (meldung) {
+        const btn = el('button', 'x-link'); btn.type = 'button'; btn.textContent = 'Zur Meldung →';
+        btn.addEventListener('click', () => openDetail(meldung.id));
+        box.appendChild(btn);
+      }
+      box.appendChild(xStimmenListe(x.stimmen));
+      wrap.appendChild(box);
+    });
+  }
+
   function aktiverTab() { const b = $('#tabs .tab.is-active'); return b ? b.dataset.tab : 'alle'; }
 
   function spurEl(n, katClass) {
@@ -1167,6 +1220,15 @@
       }));
     }
 
+    XTHEMEN.filter((x) => x.themaId === s.id).forEach((x) => {
+      body.appendChild(section('Stimmen auf X', (sec, lab) => {
+        const note = el('span', 'note'); note.textContent = ' — ' + X_HINWEIS;
+        lab.appendChild(note);
+        const p = el('p', 'd-summary'); p.textContent = x.zusammenfassung; sec.appendChild(p);
+        sec.appendChild(xStimmenListe(x.stimmen));
+      }));
+    });
+
     if (s.zeitverlauf && s.zeitverlauf.length) {
       body.appendChild(section('Zeitverlauf', (sec) => {
         const ol = el('ol', 'timeline');
@@ -1322,6 +1384,8 @@
   $('#heute').textContent = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(', ', ' · ');
 
   async function ladeUndRendere() {
+    // X-Stimmen sind Zusatz - schlägt das Laden fehl, bleibt die Seite trotzdem nutzbar.
+    const xLaden = ladeJson('/api/x').then((d) => { XTHEMEN = d.themen || []; }).catch((e) => console.error('X-Stimmen nicht geladen:', e));
     try {
       const antwort = await fetch('/api/themen');
       const daten = await antwort.json();
@@ -1333,6 +1397,7 @@
       console.error('Konnte Meldungen nicht laden:', e);
       STORIES = [];
     }
+    await xLaden;
     renderFeed(startBtn.dataset.tab);
   }
 
