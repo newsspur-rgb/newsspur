@@ -1,5 +1,23 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## NÄCHSTER SCHRITT (beschlossen 17.10., noch nicht gebaut): Konflikte über X-Listen ausbauen
+
+Nutzerwunsch: alle Kriege, Gaza als eigenes Feld, israelische Regierung inkl. Videos, ALLE Minister jeder Seite.
+Problem: X-Suche verträgt max. ~16 Konten (`from:`), und nach ~10 Suchen kommt 429.
+**Entscheidungen des Nutzers (17.10.):**
+- JA: private X-Listen auf @Newsspur_ anlegen + Konten hinzufügen (`opencli twitter list-create --private?`,
+  `list-add-batch <listId> <a,b,c>`, Lesen per `opencli twitter list-tweets <listId> -f json`). Nichts posten/folgen.
+- Videos: Vorschaubild (`media_posters` aus OpenCLI) mit ▶, Klick öffnet Tweet auf X. Bild kommt von pbs.twimg.com →
+  einen Satz in die Datenschutzerklärung aufnehmen.
+**Plan:**
+1. Eine private Liste je Kriegspartei (z. B. „NS Israel Regierung“ mit allen Ministern, IDF, Ministerien), Listen-IDs in
+   `konflikte.ts` statt Handle-Listen (Handles bleiben für Seiten-Zuordnung/Anzeigenamen). Pro Seite 1 Abfrage.
+2. Neuer Konflikt **Gaza**: Israel ↔ Hamas/Palästinenser (PA, Gaza-Behörden) ↔ UN/Helfer. Bisheriges „Iran↔USA↔Israel“ bleibt.
+3. Weitere Kriege: Sudan (SAF ↔ RSF), Israel ↔ Libanon/Hisbollah, Pakistan ↔ Indien, DR Kongo ↔ Ruanda/M23,
+   Armenien ↔ Aserbaidschan. Handles vor dem Eintragen per `opencli twitter profile <handle>` prüfen.
+4. Tweet-Typ um `media` (Poster-URL, istVideo) erweitern; Konflikt-Belege + Webseite zeigen Vorschaubild mit ▶.
+5. Testen (vitest), echter Lauf über launchd, Screenshot, `wrangler deploy`, Commit + Push, `git -C ~/newsspur-x pull`.
+
 ## X-Stimmen (Tweets-Abteilung) – live seit 2026-10-17
 
 - **Konflikte (Reiter „Konflikte“, seit 17.10.):** je Konflikt die offiziellen Konten ALLER Seiten in einer Suche,
