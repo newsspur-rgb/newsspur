@@ -41,6 +41,16 @@ export const KONFLIKTE: Konflikt[] = [
     ],
   },
   {
+    id: 'gaza',
+    name: 'Gaza: Israel ↔ Palästinenser ↔ UN/Helfer',
+    art: 'konflikt',
+    seiten: [
+      { name: 'Israel', konten: { IsraeliPM: 'Ministerpräsident', IDF: 'Israelische Armee', IsraelMFA: 'Außenministerium', cogatonline: 'COGAT (Gaza-Koordination)' } },
+      { name: 'Palästinenser', konten: { Palestine_UN: 'UN-Vertretung Palästinas', WAFANewsEnglish: 'Nachrichtenagentur WAFA (PA)', PalestineMOFA: 'Palästinensisches Außenministerium' } },
+      { name: 'UN/Helfer', konten: { UNRWA: 'UNRWA', ochaopt: 'UN-Nothilfebüro OCHA (Gebiet)' } },
+    ],
+  },
+  {
     id: 'saudi-jemen',
     name: 'Saudi-Arabien ↔ Jemen (Huthi)',
     art: 'konflikt',
@@ -83,6 +93,8 @@ export interface KonfliktBeleg {
   text: string;
   url: string;
   zeit: string;
+  posterUrl?: string;
+  istVideo: boolean;
 }
 
 export interface KonfliktPosition {
@@ -236,7 +248,7 @@ export async function konfliktLageErstellen(
             .slice(0, MAX_BELEGE)
             .map((id) => {
               const tw = tweetNachId.get(id)!;
-              return { autor: tw.autor, konto: seiteVon(k, tw.autor)?.konto ?? '@' + tw.autor, text: tw.text, url: tw.url, zeit: tw.zeit };
+              return { autor: tw.autor, konto: seiteVon(k, tw.autor)?.konto ?? '@' + tw.autor, text: tw.text, url: tw.url, zeit: tw.zeit, posterUrl: tw.posterUrl, istVideo: tw.istVideo };
             }),
         }))
         .filter((p) => p.belege.length > 0), // nur Aussagen mit echtem Tweet

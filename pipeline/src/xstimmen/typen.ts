@@ -10,6 +10,8 @@ export interface XStimme {
   url: string;
   zeit: string;
   likes: number;
+  posterUrl?: string;
+  istVideo: boolean;
 }
 
 /** Ein Thema, über das auf X gesprochen wird - zusammengefasst aus mehreren Tweets. */

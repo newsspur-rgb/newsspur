@@ -166,7 +166,7 @@ export async function xStimmenErstellen(deps: XStimmenAbhaengigkeiten): Promise<
         .filter((s) => tweetNachId.has(s.tweetId))
         .map((s) => {
           const t = tweetNachId.get(s.tweetId)!;
-          return { autor: t.autor, konto: kontoName(kategorie, t.autor), kernaussage: s.kernaussage, text: t.text, url: t.url, zeit: t.zeit, likes: t.likes };
+          return { autor: t.autor, konto: kontoName(kategorie, t.autor), kernaussage: s.kernaussage, text: t.text, url: t.url, zeit: t.zeit, likes: t.likes, posterUrl: t.posterUrl, istVideo: t.istVideo };
         });
       if (neueStimmen.length === 0) return; // Gemini hat keine echten Tweets zugeordnet
 

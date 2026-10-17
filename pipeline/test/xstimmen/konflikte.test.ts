@@ -7,7 +7,7 @@ const JETZT = new Date('2026-10-17T12:00:00Z');
 const RU_UA = KONFLIKTE.find((k) => k.id === 'russland-ukraine')!;
 
 function tweet(id: string, autor: string): Tweet {
-  return { id, autor, text: 'Text ' + id, zeit: '2026-10-17T08:00:00.000Z', likes: 1, url: `https://x.com/${autor}/status/${id}` };
+  return { id, autor, text: 'Text ' + id, zeit: '2026-10-17T08:00:00.000Z', likes: 1, url: `https://x.com/${autor}/status/${id}`, istVideo: false };
 }
 
 describe('Konflikt-Definitionen', () => {
@@ -19,6 +19,12 @@ describe('Konflikt-Definitionen', () => {
   it('ordnet Konten ihrer Seite zu', () => {
     expect(seiteVon(RU_UA, 'zelenskyyua')).toEqual({ seite: 'Ukraine', konto: 'Selenskyj' });
     expect(seiteVon(RU_UA, 'niemand')).toBeNull();
+  });
+
+  it('kennt den Gaza-Konflikt mit drei Seiten', () => {
+    const gaza = KONFLIKTE.find((k) => k.id === 'gaza')!;
+    expect(gaza.seiten.map((s) => s.name)).toEqual(['Israel', 'Palästinenser', 'UN/Helfer']);
+    expect(seiteVon(gaza, 'IDF')).toEqual({ seite: 'Israel', konto: 'Israelische Armee' });
   });
 
   it('Prompt nennt Seite und Konto je Post', () => {
@@ -50,9 +56,21 @@ describe('konfliktLageErstellen', () => {
     expect(lage!.themen).toHaveLength(1);
     expect(lage!.themen[0].positionen.map((p) => p.seite)).toEqual(['Russland', 'Ukraine']);
     expect(lage!.themen[0].positionen[1].belege).toEqual([
-      { autor: 'ZelenskyyUa', konto: 'Selenskyj', text: 'Text 2', url: 'https://x.com/ZelenskyyUa/status/2', zeit: '2026-10-17T08:00:00.000Z' },
+      { autor: 'ZelenskyyUa', konto: 'Selenskyj', text: 'Text 2', url: 'https://x.com/ZelenskyyUa/status/2', zeit: '2026-10-17T08:00:00.000Z', istVideo: false },
     ]);
     expect(lage!.aktualisiert).toBe('2026-10-17T12:00:00.000Z');
+  });
+
+  it('gibt Vorschaubild/Video-Kennzeichen eines Tweets an den Beleg weiter', async () => {
+    const videoTweet: Tweet = { ...tweet('1', 'mfa_russia'), istVideo: true, posterUrl: 'https://pbs.twimg.com/x.jpg' };
+    const suche = vi.fn().mockResolvedValue([videoTweet]);
+    const geminiClient: GeminiClient = {
+      strukturierteAntwort: vi.fn().mockResolvedValue({
+        themen: [{ titel: 'T', lage: 'L', widerspruch: '', positionen: [{ seite: 'Russland', aussage: 'a', tweetIds: ['1'] }] }],
+      }),
+    };
+    const lage = await konfliktLageErstellen(RU_UA, suche, geminiClient, JETZT);
+    expect(lage!.themen[0].positionen[0].belege[0]).toMatchObject({ istVideo: true, posterUrl: 'https://pbs.twimg.com/x.jpg' });
   });
 
   it('liefert null ohne Tweets (alter Stand bleibt), ohne Gemini zu fragen', async () => {

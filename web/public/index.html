@@ -597,6 +597,9 @@
   .belege a { font-size: 12px; line-height: 1.4; color: var(--ink-2); text-decoration: none; }
   .belege a:hover { color: var(--red-ink); }
   .belege span { font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
+  .beleg-media { display: block; position: relative; width: 120px; height: 68px; margin: 4px 0; overflow: hidden; background: var(--paper-2, #eee); }
+  .beleg-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .beleg-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; background: rgba(0,0,0,.28); }
 </style>
 </head>
 <body>
@@ -700,6 +703,17 @@
 
   const $ = (s, r = document) => r.querySelector(s);
   const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
+
+  /** Vorschaubild für einen Beleg mit Medien - Klick öffnet den Original-Post auf X. */
+  function belegMedien(beleg) {
+    if (!beleg.posterUrl) return null;
+    const a = el('a', 'beleg-media' + (beleg.istVideo ? ' is-video' : ''));
+    a.href = beleg.url; a.target = '_blank'; a.rel = 'noopener';
+    const img = document.createElement('img'); img.src = beleg.posterUrl; img.alt = ''; img.loading = 'lazy';
+    a.appendChild(img);
+    if (beleg.istVideo) { const p = el('span', 'beleg-play'); p.textContent = '▶'; a.appendChild(p); }
+    return a;
+  }
 
   function katsOf(story) { return Object.keys(story.kat).filter((k) => story.kat[k] >= SCHWELLE); }
   function primaryKat(story) { return Object.keys(story.kat).sort((a, b) => story.kat[b] - story.kat[a])[0]; }
@@ -1038,6 +1052,8 @@
       const person = el('span', 'stmt-person'); person.textContent = '@' + st.autor; head.appendChild(person);
       li.appendChild(head);
       const z = el('p', 'stmt-zitat'); z.textContent = st.kernaussage; li.appendChild(z);
+      const medien = belegMedien(st);
+      if (medien) li.appendChild(medien);
       const t = el('p', 'stmt-text'); t.textContent = '„' + st.text + '“'; li.appendChild(t);
       const beleg = el('div', 'stmt-beleg');
       const zeit = el('span'); zeit.textContent = 'X · ' + relativZeit(st.zeit); beleg.appendChild(zeit);
@@ -1099,7 +1115,7 @@
   // ---------- Konflikte ----------
   let KONFLIKTE = null;
   let konfliktFilter = 'alle';
-  const KONFLIKT_KURZ = { 'russland-ukraine': 'Russland · Ukraine', 'iran-usa-israel': 'Iran · USA · Israel', 'saudi-jemen': 'Saudi · Jemen', 'buendnis-tuerkei': 'Bündnis Türkei', 'eu-staaten': 'EU-Staaten' };
+  const KONFLIKT_KURZ = { 'russland-ukraine': 'Russland · Ukraine', 'iran-usa-israel': 'Iran · USA · Israel', 'gaza': 'Gaza', 'saudi-jemen': 'Saudi · Jemen', 'buendnis-tuerkei': 'Bündnis Türkei', 'eu-staaten': 'EU-Staaten' };
   const KONFLIKT_REIHE = Object.keys(KONFLIKT_KURZ);
   const WIDERSPRUCH_LABEL = { konflikt: 'Hier widersprechen sie sich', buendnis: 'Hier unterscheiden sie sich', positionen: 'Hier gehen die Positionen auseinander' };
 
@@ -1138,6 +1154,8 @@
             const n = el('span', 'k-seite-name'); n.textContent = p.seite; sp.appendChild(n);
             const a = el('p', 'k-aussage'); a.textContent = p.aussage; sp.appendChild(a);
             p.belege.forEach((b) => {
+              const medien = belegMedien(b);
+              if (medien) sp.appendChild(medien);
               const link = el('a', 'k-beleg'); link.href = b.url; link.target = '_blank'; link.rel = 'noopener';
               link.textContent = b.konto + ' · ' + relativZeit(b.zeit) + ' ↗'; link.title = b.text;
               sp.appendChild(link);

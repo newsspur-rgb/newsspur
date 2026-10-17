@@ -13,6 +13,9 @@ export interface Tweet {
   zeit: string;
   likes: number;
   url: string;
+  /** Vorschaubild (Foto oder Video-Thumbnail), falls der Post Medien hat. */
+  posterUrl?: string;
+  istVideo: boolean;
 }
 
 export type BefehlAusfuehren = (args: string[], timeoutMs: number) => Promise<string>;
@@ -35,6 +38,13 @@ interface TweetRoh {
   text?: string;
   created_at?: string;
   likes?: number;
+  media_urls?: string[];
+  media_posters?: string[];
+}
+
+/** Video erkennt man am .mp4 in media_urls; media_posters liefert dann das Vorschaubild. */
+function istVideoUrl(url: string | undefined): boolean {
+  return !!url && /\.mp4(\?|$)/.test(url);
 }
 
 export function tweetsParsen(ausgabe: string): Tweet[] {
@@ -53,6 +63,8 @@ export function tweetsParsen(ausgabe: string): Tweet[] {
       zeit: new Date(t.created_at!).toISOString(),
       likes: t.likes ?? 0,
       url: `https://x.com/${t.author}/status/${t.id}`,
+      posterUrl: t.media_posters?.[0],
+      istVideo: istVideoUrl(t.media_urls?.[0]),
     }))
     .filter((t) => t.text.length > 0);
 }

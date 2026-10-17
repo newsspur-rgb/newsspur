@@ -17,7 +17,7 @@ const ROH = JSON.stringify([
 ]);
 
 function tweet(id: string, autor: string, zeit = '2026-10-17T08:00:00.000Z'): Tweet {
-  return { id, autor, text: 'Text ' + id, zeit, likes: 10, url: `https://x.com/${autor}/status/${id}` };
+  return { id, autor, text: 'Text ' + id, zeit, likes: 10, url: `https://x.com/${autor}/status/${id}`, istVideo: false };
 }
 
 function meldung(id: string): VerarbeitetesThema {
@@ -37,9 +37,19 @@ describe('tweetsParsen', () => {
     expect(t).toHaveLength(2);
     expect(t[0]).toEqual({
       id: '1', autor: 'bundeskanzler', text: 'Die Frühstartrente kommt.', zeit: '2026-10-16T10:50:00.000Z', likes: 1162,
-      url: 'https://x.com/bundeskanzler/status/1',
+      url: 'https://x.com/bundeskanzler/status/1', istVideo: false,
     });
     expect(t[1].text).toBe('Wir fordern & verlangen X');
+  });
+
+  it('erkennt Video an .mp4 in media_urls, Bild bleibt kein Video', () => {
+    const roh = JSON.stringify([
+      { id: '1', author: 'IDF', text: 'Video', created_at: 'Fri Oct 16 10:50:00 +0000 2026', likes: 1, media_urls: ['https://video.twimg.com/x.mp4?tag=1'], media_posters: ['https://pbs.twimg.com/x.jpg'] },
+      { id: '2', author: 'IDF', text: 'Bild', created_at: 'Fri Oct 16 10:50:00 +0000 2026', likes: 1, media_urls: ['https://pbs.twimg.com/y.jpg'], media_posters: ['https://pbs.twimg.com/y.jpg'] },
+    ]);
+    const t = tweetsParsen(roh);
+    expect(t[0]).toMatchObject({ istVideo: true, posterUrl: 'https://pbs.twimg.com/x.jpg' });
+    expect(t[1]).toMatchObject({ istVideo: false, posterUrl: 'https://pbs.twimg.com/y.jpg' });
   });
 
   it('wirft bei OpenCLI-Fehlerobjekt mit Hinweis auf Chrome', () => {
@@ -75,7 +85,7 @@ describe('xStimmenErstellen', () => {
     const store = erstelleSpeicherXStimmenStore();
     await store.speichern({
       id: 'x-alt', kategorie: 'deutschland', titel: 'Alt', zusammenfassung: 'z', themaId: 'm1',
-      stimmen: [{ autor: 'spdde', konto: 'SPD', kernaussage: 'k', text: 't', url: 'https://x.com/spdde/status/9', zeit: '2026-10-17T01:00:00.000Z', likes: 1 }],
+      stimmen: [{ autor: 'spdde', konto: 'SPD', kernaussage: 'k', text: 't', url: 'https://x.com/spdde/status/9', zeit: '2026-10-17T01:00:00.000Z', likes: 1, istVideo: false }],
       erstellt: '2026-10-17T01:00:00.000Z', aktualisiert: '2026-10-17T01:00:00.000Z',
     });
 
