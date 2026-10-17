@@ -7,8 +7,9 @@
   Gemini (`gemini-3.5-flash-lite`) zu max. 5 Themen je Kategorie gebündelt, „Wer sagt was“, Original verlinkt.
   Offene X-Suche bewusst nicht genutzt (fast nur Spam/Spendenaufrufe).
 - **Läuft NUR auf dem Mac** (X gratis nur über OpenCLI im eingeloggten Chrome, Konto @Newsspur_):
-  launchd `~/Library/LaunchAgents/de.newsspur.x-stimmen.plist`, alle 3 Std → `pipeline/scripts/x-lauf.sh`
-  → `npm run x:run`. Log: `~/Library/Logs/newsspur-x.log`. Mac zu/Chrome zu = kein Lauf (wird übersprungen).
+  launchd `~/Library/LaunchAgents/de.newsspur.x-stimmen.plist`, alle 3 Std → `~/newsspur-x/lauf.sh`
+  (eigene Kopie des Repos AUSSERHALB von ~/Desktop – macOS sperrt launchd den Desktop-Ordner;
+  holt per git pull den GitHub-Stand, braucht eine eigene Schluesseldatei in pipeline/) → `npm run x:run`. Log: `~/Library/Logs/newsspur-x.log`. Mac zu/Chrome zu = kein Lauf (wird übersprungen).
   Abschalten: `launchctl bootout gui/$(id -u)/de.newsspur.x-stimmen`.
 - D1-Tabelle `x_stimmen`, Worker-Route `/api/x` (letzte 3 Tage). Kosten: 0 € (3 X-Suchen + 3 Gemini-Aufrufe/Lauf).
 - **X drosselt** bei vielen Suchen (429, 15–30 Min). Deshalb 60 s Pause zwischen den 3 Suchen; nicht oft manuell starten.
