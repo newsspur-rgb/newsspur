@@ -10,7 +10,9 @@ import { xStimmenErstellen } from './xstimmen/xStimmen.js';
 // Eigenes Gratis-Kontingent: das Standardmodell braucht der 30-Min-Nachrichtenlauf.
 const X_MODELL = 'gemini-3.5-flash-lite';
 /** Pause zwischen X-Suchen - X drosselt sonst die Sitzung (429). */
-const PAUSE_MS = 90_000;
+const PAUSE_MS = 150_000;
+/** Bremst X trotzdem (429), einmal so lange warten und neu versuchen. */
+const DROSSEL_WARTEN_MS = 20 * 60_000;
 
 async function main(): Promise<void> {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN, GEMINI_API_KEY } = process.env;
@@ -21,7 +23,32 @@ async function main(): Promise<void> {
 
   const abfragen = erstelleD1Abfrage(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN);
   const geminiClient = erstelleGeminiClient(GEMINI_API_KEY, fetch, undefined, X_MODELL);
-  const suche = (handles: string[], seit: string) => xTweetsSuchen(handles, seit);
+  const suche = async (handles: string[], seit: string) => {
+    try {
+      return await xTweetsSuchen(handles, seit);
+    } catch (fehler) {
+      if (!String(fehler).includes('429')) throw fehler;
+      console.warn(`X bremst (429) - warte ${DROSSEL_WARTEN_MS / 60_000} Min und versuche es noch einmal`);
+      await new Promise((r) => setTimeout(r, DROSSEL_WARTEN_MS));
+      return xTweetsSuchen(handles, seit);
+    }
+  };
+
+  // Konflikte zuerst: Seiten gegenüberstellen (wichtiger als die Ländergruppen)
+  const konflikteStore = erstelleD1KonflikteStore(abfragen);
+  for (const [i, k] of KONFLIKTE.entries()) {
+    if (i > 0) await new Promise((r) => setTimeout(r, PAUSE_MS));
+    try {
+      const lage = await konfliktLageErstellen(k, suche, geminiClient);
+      if (!lage) { console.log(`- Konflikt ${k.id}: keine Posts, alter Stand bleibt`); continue; }
+      await konflikteStore.speichern(lage);
+      console.log(`- Konflikt ${k.id}: ${lage.themen.map((t) => `${t.titel} [${t.positionen.map((p) => p.seite).join('/')}]`).join(' | ')}`);
+    } catch (fehlerUrsache) {
+      console.warn(`Konflikt ${k.id} fehlgeschlagen:`, fehlerUrsache);
+    }
+  }
+
+  await new Promise((r) => setTimeout(r, PAUSE_MS));
   const themen = await xStimmenErstellen({
     themenStore: new D1ThemenStore(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN),
     geminiClient,
@@ -35,19 +62,6 @@ async function main(): Promise<void> {
     console.log(`- [${t.kategorie}] ${t.titel} (${t.stimmen.length} Tweets${t.themaId ? ', Meldung ' + t.themaId : ''})`);
   }
 
-  // Konflikte: Seiten gegenüberstellen
-  const konflikteStore = erstelleD1KonflikteStore(abfragen);
-  for (const k of KONFLIKTE) {
-    await new Promise((r) => setTimeout(r, PAUSE_MS));
-    try {
-      const lage = await konfliktLageErstellen(k, suche, geminiClient);
-      if (!lage) { console.log(`- Konflikt ${k.id}: keine Posts, alter Stand bleibt`); continue; }
-      await konflikteStore.speichern(lage);
-      console.log(`- Konflikt ${k.id}: ${lage.themen.map((t) => `${t.titel} [${t.positionen.map((p) => p.seite).join('/')}]`).join(' | ')}`);
-    } catch (fehlerUrsache) {
-      console.warn(`Konflikt ${k.id} fehlgeschlagen:`, fehlerUrsache);
-    }
-  }
 }
 
 main().catch((fehler) => {

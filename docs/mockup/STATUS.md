@@ -7,7 +7,7 @@
   Definitionen in `pipeline/src/xstimmen/konflikte.ts`: Russland↔Ukraine (+Deutschland), Iran↔USA↔Israel,
   Saudi↔Jemen (Huthi), Bündnis Türkei–Pakistan–Saudi–Aserbaidschan, große EU-Staaten. D1 `x_konflikte`
   (je Konflikt nur der neueste Stand), Route `/api/konflikte`. Huthi-/Jemen-Handles ungeprüft.
-- **Takt:** alle 4,5 Std (launchd 16200 s). Ein Lauf = 12 Suchen à 90 s Pause ≈ 25–30 Min.
+- **Takt:** alle 4,5 Std (launchd 16200 s). Ein Lauf = 12 Suchen, Konflikte zuerst, 150 s Pause ≈ 30 Min; bei X-Bremse (429) 20 Min warten + 1 Neuversuch.
 - **Länder (seit 17.10. mittags):** 7 Gruppen – Deutschland, Türkei, Nahost, Iran, USA, FR/UK/ES/BE, EU – mit Filter-Knöpfen im Reiter. Ein Lauf = 7 Suchen mit 90 s Pause ≈ 15 Min. Erster voller Lauf: 30 Themen.
 - **Was:** Reiter „X-Stimmen“ auf newsspur.de + Abschnitt „Stimmen auf X“ in passenden Meldungen.
   Posts geprüfter Konten (Liste: `pipeline/src/xstimmen/konten.ts`, je DE/TR/Nahost) werden per
