@@ -15,7 +15,7 @@ Problem: X-Suche verträgt max. ~16 Konten (`from:`), und nach ~10 Suchen kommt 
 2. Neuer Konflikt **Gaza**: Israel ↔ Hamas/Palästinenser (PA, Gaza-Behörden) ↔ UN/Helfer. Bisheriges „Iran↔USA↔Israel“ bleibt.
 3. Weitere Kriege: Sudan (SAF ↔ RSF), Israel ↔ Libanon/Hisbollah, Pakistan ↔ Indien, DR Kongo ↔ Ruanda/M23,
    Armenien ↔ Aserbaidschan. Handles vor dem Eintragen per `opencli twitter profile <handle>` prüfen.
-4. Tweet-Typ um `media` (Poster-URL, istVideo) erweitern; Konflikt-Belege + Webseite zeigen Vorschaubild mit ▶.
+4. Tweet-Typ um `media` (Poster-URL, istVideo) erweitern; ALLE geteilten Videos der Seiten (v. a. Israel) sichtbar machen: Vorschaubild mit ▶ in Konflikte + X-Stimmen, Klick öffnet das Video auf X. Nutzer betont 17.10.: „Videos mit einfügen, damit die Leser das sehen“.
 5. Testen (vitest), echter Lauf über launchd, Screenshot, `wrangler deploy`, Commit + Push, `git -C ~/newsspur-x pull`.
 
 ## X-Stimmen (Tweets-Abteilung) – live seit 2026-10-17
