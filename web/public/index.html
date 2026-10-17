@@ -600,6 +600,13 @@
   .beleg-media { display: block; position: relative; width: 120px; height: 68px; margin: 4px 0; overflow: hidden; background: var(--paper-2, #eee); }
   .beleg-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .beleg-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; background: rgba(0,0,0,.28); }
+  .vorlesen-btn {
+    appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--ink); border: 1.5px solid var(--line); padding: 11px 18px;
+    margin: 12px 0 2px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    min-height: 44px;
+  }
+  .vorlesen-btn.is-active { background: var(--red); color: #fff; border-color: var(--red); }
 </style>
 </head>
 <body>
@@ -703,6 +710,32 @@
 
   const $ = (s, r = document) => r.querySelector(s);
   const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
+
+  /** Knopf, der einen Text per Browser-Sprachausgabe vorliest (kostenlos, ohne eigenen Server). */
+  let vorlesenAktiverBtn = null;
+  function vorlesenKnopf(textFn) {
+    if (!('speechSynthesis' in window)) return null;
+    const btn = el('button', 'vorlesen-btn');
+    btn.type = 'button';
+    btn.textContent = '🔊 Vorlesen';
+    btn.addEventListener('click', () => {
+      const warAktiv = vorlesenAktiverBtn === btn;
+      if (vorlesenAktiverBtn) { vorlesenAktiverBtn.textContent = '🔊 Vorlesen'; vorlesenAktiverBtn.classList.remove('is-active'); }
+      vorlesenAktiverBtn = null;
+      speechSynthesis.cancel();
+      if (warAktiv) return;
+      const u = new SpeechSynthesisUtterance(textFn());
+      u.lang = 'de-DE';
+      u.onend = u.onerror = () => {
+        if (vorlesenAktiverBtn === btn) { btn.textContent = '🔊 Vorlesen'; btn.classList.remove('is-active'); vorlesenAktiverBtn = null; }
+      };
+      vorlesenAktiverBtn = btn;
+      btn.textContent = '⏸ Stopp';
+      btn.classList.add('is-active');
+      speechSynthesis.speak(u);
+    });
+    return btn;
+  }
 
   /** Vorschaubild für einen Beleg mit Medien - Klick öffnet den Original-Post auf X. */
   function belegMedien(beleg) {
@@ -1287,6 +1320,8 @@
     wrap.appendChild(chips);
     const h = el('h1', 'd-headline'); h.textContent = s.schlagzeile; wrap.appendChild(h);
     wrap.appendChild(sourceLine(s));
+    const vk = vorlesenKnopf(() => s.schlagzeile + '. ' + s.zusammenfassung);
+    if (vk) wrap.appendChild(vk);
     body.appendChild(wrap);
 
     const hero = el('div', 'd-hero');
@@ -1440,6 +1475,8 @@
     const d = $('#detail');
     d.hidden = true;
     d.setAttribute('aria-hidden', 'true');
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    vorlesenAktiverBtn = null;
   }
 
   function currentTheme() {
