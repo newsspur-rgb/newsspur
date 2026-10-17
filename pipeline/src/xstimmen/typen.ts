@@ -1,4 +1,4 @@
-import type { Kategorie } from '../rules/kategorien.js';
+import type { XGruppe } from './konten.js';
 
 /** Ein Tweet als Beleg, mit der Kernaussage auf Deutsch. */
 export interface XStimme {
@@ -15,7 +15,8 @@ export interface XStimme {
 /** Ein Thema, über das auf X gesprochen wird - zusammengefasst aus mehreren Tweets. */
 export interface XThema {
   id: string;
-  kategorie: Kategorie;
+  /** Ländergruppe, z. B. deutschland, usa, eu */
+  kategorie: XGruppe;
   titel: string;
   zusammenfassung: string;
   /** Passende newsspur-Meldung, falls es eine gibt. */

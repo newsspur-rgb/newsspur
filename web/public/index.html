@@ -1035,27 +1035,51 @@
     return ul;
   }
 
-  async function renderX(wrap) {
+  const X_GRUPPE_LABEL = { deutschland: 'Deutschland', tuerkei: 'Türkiye', nahost: 'Nahost', iran: 'Iran', usa: 'USA', westeuropa: 'FR · UK · ES · BE', eu: 'EU' };
+  let xFilter = 'alle';
+
+  function renderX(wrap) {
     viewHead(wrap, 'X-Stimmen', 'Worüber Regierungen, Parteien und Behörden auf X sprechen – zusammengefasst.');
     const m = el('div', 'methode');
     const mb = el('b'); mb.textContent = 'So arbeiten wir: '; m.appendChild(mb);
-    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten (z. B. Bundeskanzler, Ministerien, Parteien, türkisches Präsidialamt, israelische und iranische Regierung, UN-Organisationen). Eine KI bündelt sie zu Themen und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
+    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten – Regierungen, Ministerien, Parteien und große Redaktionen aus Deutschland, der Türkei, Israel, Iran, den USA, Frankreich, Großbritannien, Spanien, Belgien und der EU. Eine KI bündelt sie zu Themen, übersetzt und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
     wrap.appendChild(m);
     if (!XTHEMEN.length) return leer(wrap, 'Gerade keine X-Stimmen – der nächste Lauf kommt in wenigen Stunden.');
-    XTHEMEN.forEach((x) => {
-      const box = el('div', 'entwicklung');
-      const nr = el('span', 'entwicklung-nr'); nr.textContent = (KAT_LABEL[x.kategorie] || x.kategorie) + ' · ' + relativZeit(x.aktualisiert); box.appendChild(nr);
-      const h = el('h3'); h.textContent = x.titel; box.appendChild(h);
-      const k = el('p', 'kurz'); k.textContent = x.zusammenfassung; box.appendChild(k);
-      const meldung = x.themaId && STORIES.find((s) => s.id === x.themaId);
-      if (meldung) {
-        const btn = el('button', 'x-link'); btn.type = 'button'; btn.textContent = 'Zur Meldung →';
-        btn.addEventListener('click', () => openDetail(meldung.id));
-        box.appendChild(btn);
-      }
-      box.appendChild(xStimmenListe(x.stimmen));
-      wrap.appendChild(box);
+
+    const vorhanden = Object.keys(X_GRUPPE_LABEL).filter((g) => XTHEMEN.some((x) => x.kategorie === g));
+    if (xFilter !== 'alle' && !vorhanden.includes(xFilter)) xFilter = 'alle';
+    const filter = el('div', 'filter-row'); filter.style.padding = '14px 16px 0';
+    const liste = el('div');
+    const zeichne = () => {
+      liste.innerHTML = '';
+      XTHEMEN.filter((x) => xFilter === 'alle' || x.kategorie === xFilter).forEach((x) => {
+        const box = el('div', 'entwicklung');
+        const nr = el('span', 'entwicklung-nr'); nr.textContent = (X_GRUPPE_LABEL[x.kategorie] || x.kategorie) + ' · ' + relativZeit(x.aktualisiert); box.appendChild(nr);
+        const h = el('h3'); h.textContent = x.titel; box.appendChild(h);
+        const k = el('p', 'kurz'); k.textContent = x.zusammenfassung; box.appendChild(k);
+        const meldung = x.themaId && STORIES.find((s) => s.id === x.themaId);
+        if (meldung) {
+          const btn = el('button', 'x-link'); btn.type = 'button'; btn.textContent = 'Zur Meldung →';
+          btn.addEventListener('click', () => openDetail(meldung.id));
+          box.appendChild(btn);
+        }
+        box.appendChild(xStimmenListe(x.stimmen));
+        liste.appendChild(box);
+      });
+    };
+    [['alle', 'Alle']].concat(vorhanden.map((g) => [g, X_GRUPPE_LABEL[g]])).forEach(([wert, text]) => {
+      const b = el('button', 'filter-btn' + (xFilter === wert ? ' is-active' : ''));
+      b.type = 'button'; b.textContent = text;
+      b.addEventListener('click', () => {
+        xFilter = wert;
+        filter.querySelectorAll('.filter-btn').forEach((y) => y.classList.toggle('is-active', y === b));
+        zeichne();
+      });
+      filter.appendChild(b);
     });
+    wrap.appendChild(filter);
+    wrap.appendChild(liste);
+    zeichne();
   }
 
   function aktiverTab() { const b = $('#tabs .tab.is-active'); return b ? b.dataset.tab : 'alle'; }
