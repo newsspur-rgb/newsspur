@@ -97,8 +97,6 @@ export const X_KONTEN: Record<XGruppe, Record<string, string>> = {
     MAECgob: 'Spanisches Außenministerium',
     Bart_DeWever: 'Bart De Wever (Belgien)',
     BelgiumMFA: 'Belgisches Außenministerium',
-    AFP: 'AFP',
-    BBCWorld: 'BBC World',
   },
   eu: {
     vonderleyen: 'Ursula von der Leyen',
