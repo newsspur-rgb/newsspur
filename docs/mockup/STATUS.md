@@ -1,45 +1,39 @@
 # NEWSSPUR – Stand & nächste Schritte
 
-## Etappe 1 fertig (17.10. nachmittags, Commit `de14562`, noch nicht gepusht/deployed): Gaza + Video-Vorschau
+## Etappe 2 fertig (17.10. abends, Commit `e832a91`): X-Listen + 5 weitere Kriege
 
-Umgesetzt: neuer Konflikt **Gaza** (Israel ↔ Palästinenser ↔ UN/Helfer; Hamas hat kein verifiziertes X-Konto,
-deshalb WAFA/Palestine_UN/PalestineMOFA als Palästinenser-Stimme, Handles per `opencli twitter profile` geprüft).
-`Tweet`/`KonfliktBeleg`/`XStimme` um `posterUrl` + `istVideo` erweitert (Video = `.mp4` in `media_urls`, sonst Bild).
-Vorschaubild mit ▶ bei Video im Konflikte-Tab und bei X-Stimmen, Klick öffnet den Original-Post auf X. Keine
-D1-Migration nötig (JSON-Feld). Tests ergänzt (vitest, alle grün bis auf den bekannten alten `video.test.ts`-Fall),
-`tsc --noEmit` sauber (pipeline + web), per Mock-Server + Browser-Screenshot geprüft.
+Umgesetzt: `Seite.listId` in `konflikte.ts` - eine Seite kann statt Handles eine private X-Liste nutzen
+(`list-tweets` statt der kombinierten `from:`-Suche, umgeht das ~16-Konten-Limit; Retweets werden rausgefiltert,
+da `list-tweets` die anders als die from:-Suche mitliefert). Private Liste **„NS Israel Regierung“** angelegt
+(ID `2111528805231632864`, 8 Konten: PM, Armee, Außenministerium, COGAT, Verteidigungsminister Katz,
+Finanzminister Smotrich, Minister für nationale Sicherheit Ben Gvir, Netanjahu persönlich) - geteilt zwischen
+Gaza/Iran-USA-Israel/Israel-Libanon, pro Lauf nur **einmal** abgefragt (Cache in `xStimmenCli.ts`).
+Neue Konflikte: **Sudan** (SAF ↔ RSF), **Israel ↔ Libanon**, **Pakistan ↔ Indien**, **DR Kongo ↔ Ruanda (M23)**,
+**Armenien ↔ Aserbaidschan** - alle Handles vorher per `opencli twitter profile` geprüft. Bewusst **nicht**
+eingebaut, weil kein verifiziertes Konto gefunden: Hamas, Hisbollah, M23 als eigene Stimme (nur Rwanda/DRC-Seite).
+Pause zwischen X-Suchen von 150s auf 180s erhöht (12 → 20 Suchen/Lauf jetzt, mehr Risiko für X-Drosselung/429 -
+die bestehende Graceful-Degradation greift aber: ein 429 lässt nur diesen einen Konflikt für den Lauf ausfallen,
+nicht den ganzen Lauf). Tests ergänzt (23 in `xstimmen/`, alle grün), `tsc --noEmit` sauber, Frontend-Filterliste
+im Konflikte-Tab um die 5 neuen + Israel-Libanon ergänzt, per Mock-Server geprüft.
 
-**Offen vor dem Deploy:** `wrangler deploy`, Push, `git -C ~/newsspur-x pull` (Freigabe beim Nutzer einholen).
-**Offen, noch nicht gefragt:** Es gibt noch gar keine Datenschutzerklärung auf newsspur.de – die Vorschaubilder laden
-jetzt direkt von pbs.twimg.com/video.twimg.com (zeigt dem Nutzer-Browser die Besucher-IP). Nutzer am 17.10. erwähnt,
-dafür "einen Satz" zu ergänzen – das setzt aber voraus, dass es überhaupt eine Seite dafür gibt. Nutzer fragen, ob
-eine Datenschutzerklärung erstellt werden soll.
-
-## NÄCHSTER SCHRITT (Etappe 2, noch nicht gebaut): X-Listen + weitere Kriege
-
-Nutzerwunsch: israelische Regierung inkl. ALLE Minister jeder Seite, weitere Kriege.
-Problem: X-Suche verträgt max. ~16 Konten (`from:`), und nach ~10 Suchen kommt 429. Gaza passt mit 9 Konten noch
-in eine normale `from:`-Suche; für "ALLE Minister" braucht es die X-Listen-Lösung.
-**Entscheidungen des Nutzers (17.10.):**
-- JA: private X-Listen auf @Newsspur_ anlegen + Konten hinzufügen (`opencli twitter list-create --private?`,
-  `list-add-batch <listId> <a,b,c>`, Lesen per `opencli twitter list-tweets <listId> -f json`). Nichts posten/folgen.
-**Plan:**
-1. Eine private Liste je Kriegspartei mit sehr vielen Konten (z. B. „NS Israel Regierung“ mit allen Ministern, IDF,
-   Ministerien), Listen-ID zusätzlich zu den Handles in `konflikte.ts` (Handles bleiben für Seiten-Zuordnung/Anzeigenamen).
-   Vorsicht: pro zusätzlicher Liste/Suche steigt das Risiko, dass X nach ~10 Suchen pro Lauf drosselt (429) – beim
-   Einbauen die Gesamtzahl der Suchen pro Lauf im Blick behalten, ggf. Takt/Pausen anpassen.
-2. Weitere Kriege: Sudan (SAF ↔ RSF), Israel ↔ Libanon/Hisbollah, Pakistan ↔ Indien, DR Kongo ↔ Ruanda/M23,
-   Armenien ↔ Aserbaidschan. Handles vor dem Eintragen per `opencli twitter profile <handle>` prüfen.
-3. Testen (vitest), echter Lauf über launchd, Screenshot, `wrangler deploy`, Commit + Push, `git -C ~/newsspur-x pull`.
+**Offen:** `git push` + `wrangler deploy` (Freigabe beim Nutzer einholen). Danach beim nächsten X-Listen-Lauf
+(~alle 4,5 Std) beobachten, ob 20 Suchen/Lauf zu häufigeren 429 führen - falls ja, Pause weiter erhöhen oder
+weniger wichtige Länder-Gruppen seltener laufen lassen.
+**Noch offen, noch nicht gefragt:** Datenschutzerklärung (`web/public/datenschutz.html`) hat noch einen
+Platzhalter statt echtem Namen/Adresse des Verantwortlichen (Pflichtangabe nach Art. 13 DSGVO).
 
 ## X-Stimmen (Tweets-Abteilung) – live seit 2026-10-17
 
-- **Konflikte (Reiter „Konflikte“, seit 17.10.):** je Konflikt die offiziellen Konten ALLER Seiten in einer Suche,
-  Gemini stellt gegenüber: Lage (neutral) / Aussage je Seite mit Tweet-Beleg / „Hier widersprechen sie sich“.
-  Definitionen in `pipeline/src/xstimmen/konflikte.ts`: Russland↔Ukraine (+Deutschland), Iran↔USA↔Israel,
-  Saudi↔Jemen (Huthi), Bündnis Türkei–Pakistan–Saudi–Aserbaidschan, große EU-Staaten. D1 `x_konflikte`
+- **Konflikte (Reiter „Konflikte“, seit 17.10.):** je Konflikt die offiziellen Konten aller Seiten - meist in einer
+  kombinierten `from:`-Suche, bei Seiten mit zu vielen Konten (aktuell nur Israel) über eine private X-Liste statt
+  Handles. Gemini stellt gegenüber: Lage (neutral) / Aussage je Seite mit Tweet-Beleg / „Hier widersprechen sie sich“.
+  11 Konflikte in `pipeline/src/xstimmen/konflikte.ts`: Russland↔Ukraine (+Deutschland), Iran↔USA↔Israel, Gaza,
+  Israel↔Libanon, Saudi↔Jemen (Huthi), Sudan (SAF↔RSF), Pakistan↔Indien, DR Kongo↔Ruanda (M23),
+  Armenien↔Aserbaidschan, Bündnis Türkei–Pakistan–Saudi–Aserbaidschan, große EU-Staaten. D1 `x_konflikte`
   (je Konflikt nur der neueste Stand), Route `/api/konflikte`. Huthi-/Jemen-Handles ungeprüft.
-- **Takt:** alle 4,5 Std (launchd 16200 s). Ein Lauf = 12 Suchen, Konflikte zuerst, 150 s Pause ≈ 30 Min; bei X-Bremse (429) 20 Min warten + 1 Neuversuch.
+- **Takt:** alle 4,5 Std (launchd 16200 s). Ein Lauf = ca. 20 Suchen (11 Konflikte, davon die Israel-Liste nur 1×
+  trotz 3 Nutzung, + 7 Länder-Gruppen), Konflikte zuerst, 180 s Pause (seit 17.10. abends, vorher 150 s)
+  ≈ 60 Min; bei X-Bremse (429) 20 Min warten + 1 Neuversuch.
 - **Länder (seit 17.10. mittags):** 7 Gruppen – Deutschland, Türkei, Nahost, Iran, USA, FR/UK/ES/BE, EU – mit Filter-Knöpfen im Reiter. Ein Lauf = 7 Suchen mit 90 s Pause ≈ 15 Min. Erster voller Lauf: 30 Themen.
 - **Was:** Reiter „X-Stimmen“ auf newsspur.de + Abschnitt „Stimmen auf X“ in passenden Meldungen.
   Posts geprüfter Konten (Liste: `pipeline/src/xstimmen/konten.ts`, je DE/TR/Nahost) werden per
