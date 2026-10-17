@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { tweetsParsen, kontenAbfrage, xTweetsSuchen } from '../../src/xstimmen/xSuche.js';
+import { tweetsParsen, kontenAbfrage, xTweetsSuchen, xListeTweetsSuchen } from '../../src/xstimmen/xSuche.js';
 import { xStimmenErstellen } from '../../src/xstimmen/xStimmen.js';
 import { erstelleSpeicherXStimmenStore } from '../../src/xstimmen/xStimmenStore.js';
 import { kontoName } from '../../src/xstimmen/konten.js';
@@ -68,6 +68,19 @@ describe('kontenAbfrage / xTweetsSuchen', () => {
     const t = await xTweetsSuchen(['bundeskanzler'], '2026-10-16T08:00:00.000Z', ausfuehren);
     expect(t.map((x) => x.id)).toEqual(['1']);
     expect(ausfuehren.mock.calls[0][0]).toContain('live');
+  });
+});
+
+describe('xListeTweetsSuchen', () => {
+  it('ruft list-tweets mit der Listen-ID auf und entfernt Retweets', async () => {
+    const roh = JSON.stringify([
+      { id: '1', author: 'IDF', text: 'RT @wer: geteilt', created_at: 'Fri Oct 16 10:50:00 +0000 2026', likes: 1 },
+      { id: '2', author: 'IDF', text: 'Eigene Aussage', created_at: 'Fri Oct 16 10:50:00 +0000 2026', likes: 1 },
+    ]);
+    const ausfuehren = vi.fn().mockResolvedValue(roh);
+    const t = await xListeTweetsSuchen('123', '2026-10-16T00:00:00.000Z', ausfuehren);
+    expect(ausfuehren.mock.calls[0][0]).toEqual(['twitter', 'list-tweets', '123', '--limit', '40', '-f', 'json']);
+    expect(t.map((x) => x.id)).toEqual(['2']);
   });
 });
 

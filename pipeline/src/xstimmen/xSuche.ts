@@ -86,3 +86,17 @@ export async function xTweetsSuchen(
   );
   return tweetsParsen(ausgabe).filter((t) => t.zeit >= seitIso);
 }
+
+/**
+ * Tweets einer privaten X-Liste (für Seiten mit mehr Konten, als in eine from:-Suche passen).
+ * Siehe konflikte.ts: Seite.listId.
+ */
+export async function xListeTweetsSuchen(
+  listId: string,
+  seitIso: string,
+  ausfuehren: BefehlAusfuehren = opencliAusfuehren,
+): Promise<Tweet[]> {
+  const ausgabe = await ausfuehren(['twitter', 'list-tweets', listId, '--limit', '40', '-f', 'json'], SUCH_TIMEOUT_MS);
+  // list-tweets liefert anders als die from:-Suche auch Retweets - eigene Aussage, keine Weiterverbreitung.
+  return tweetsParsen(ausgabe).filter((t) => t.zeit >= seitIso && !/^RT @/.test(t.text));
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { KONFLIKTE, alleHandles, seiteVon, konfliktLageErstellen, konfliktPromptErstellen } from '../../src/xstimmen/konflikte.js';
+import { KONFLIKTE, alleHandles, listenIds, seiteVon, konfliktLageErstellen, konfliktPromptErstellen } from '../../src/xstimmen/konflikte.js';
 import type { GeminiClient } from '../../src/summarize/geminiClient.js';
 import type { Tweet } from '../../src/xstimmen/xSuche.js';
 
@@ -29,6 +29,24 @@ describe('Konflikt-Definitionen', () => {
 
   it('Prompt nennt Seite und Konto je Post', () => {
     expect(konfliktPromptErstellen(RU_UA, [tweet('7', 'mfa_russia')])).toContain('[7] Russland – Russisches Außenministerium');
+  });
+
+  it('kennt alle 11 Konflikte mit mindestens zwei Seiten, keine doppelten IDs', () => {
+    expect(KONFLIKTE).toHaveLength(11);
+    for (const k of KONFLIKTE) expect(k.seiten.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(KONFLIKTE.map((k) => k.id)).size).toBe(KONFLIKTE.length);
+    for (const id of ['sudan', 'israel-libanon', 'pakistan-indien', 'kongo-ruanda', 'armenien-aserbaidschan']) {
+      expect(KONFLIKTE.some((k) => k.id === id)).toBe(true);
+    }
+  });
+
+  it('Israel-Seite nutzt in Gaza/Iran-USA-Israel/Israel-Libanon dieselbe X-Liste statt Handles', () => {
+    for (const id of ['gaza', 'iran-usa-israel', 'israel-libanon']) {
+      const k = KONFLIKTE.find((x) => x.id === id)!;
+      expect(listenIds(k)).toEqual(['2111528805231632864']);
+      expect(alleHandles(k)).not.toContain('IDF'); // Israel-Handles kommen über die Liste, nicht die from:-Suche
+    }
+    expect(listenIds(RU_UA)).toEqual([]);
   });
 });
 
@@ -71,6 +89,29 @@ describe('konfliktLageErstellen', () => {
     };
     const lage = await konfliktLageErstellen(RU_UA, suche, geminiClient, JETZT);
     expect(lage!.themen[0].positionen[0].belege[0]).toMatchObject({ istVideo: true, posterUrl: 'https://pbs.twimg.com/x.jpg' });
+  });
+
+  it('holt bei einer Seite mit X-Liste auch deren Tweets und baut sie mit ein', async () => {
+    const gaza = KONFLIKTE.find((k) => k.id === 'gaza')!;
+    const suche = vi.fn().mockResolvedValue([tweet('h1', 'WAFANewsEnglish')]);
+    const listeSuche = vi.fn().mockResolvedValue([tweet('l1', 'IDF')]);
+    const geminiClient: GeminiClient = {
+      strukturierteAntwort: vi.fn().mockResolvedValue({
+        themen: [
+          {
+            titel: 'T', lage: 'L', widerspruch: '',
+            positionen: [
+              { seite: 'Israel', aussage: 'a', tweetIds: ['l1'] },
+              { seite: 'Palästinenser', aussage: 'b', tweetIds: ['h1'] },
+            ],
+          },
+        ],
+      }),
+    };
+    const lage = await konfliktLageErstellen(gaza, suche, geminiClient, JETZT, listeSuche);
+    expect(listeSuche).toHaveBeenCalledWith('2111528805231632864', expect.any(String));
+    expect(suche.mock.calls[0][0]).not.toContain('IDF'); // Israel kommt nur über die Liste
+    expect(lage!.themen[0].positionen.map((p) => p.seite)).toEqual(['Israel', 'Palästinenser']);
   });
 
   it('liefert null ohne Tweets (alter Stand bleibt), ohne Gemini zu fragen', async () => {

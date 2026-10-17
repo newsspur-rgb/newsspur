@@ -9,6 +9,12 @@ import type { XSuche } from './xStimmen.js';
 export interface Seite {
   name: string;
   konten: Record<string, string>;
+  /**
+   * Private X-Liste mit allen Konten dieser Seite (für Seiten mit mehr Konten, als in eine
+   * einzelne from:-Suche passen - X erlaubt dort nur ~16). konten bleibt für die Namen-Zuordnung,
+   * die Tweets kommen dann aber über list-tweets statt über die kombinierte from:-Suche.
+   */
+  listId?: string;
 }
 
 export interface Konflikt {
@@ -18,6 +24,19 @@ export interface Konflikt {
   art: 'konflikt' | 'buendnis' | 'positionen';
   seiten: Seite[];
 }
+
+/**
+ * Private X-Liste "NS Israel Regierung" (angelegt 17.10.2026 auf @Newsspur_): PM, Armee,
+ * Außenministerium, COGAT, Verteidigungs-/Finanzminister, Minister für nationale Sicherheit -
+ * mehr als in eine einzelne from:-Suche passt. Wird von mehreren Konflikten geteilt.
+ */
+const ISRAEL_LISTE_ID = '2111528805231632864';
+const ISRAEL_KONTEN = {
+  IsraeliPM: 'Ministerpräsident', IDF: 'Israelische Armee', IsraelMFA: 'Außenministerium',
+  cogatonline: 'COGAT (Gaza-Koordination)', netanyahu: 'Ministerpräsident Netanjahu',
+  Israel_katz: 'Verteidigungsminister Katz', bezalelsm: 'Finanzminister Smotrich',
+  itamarbengvir: 'Minister für nationale Sicherheit Ben Gvir',
+};
 
 export const KONFLIKTE: Konflikt[] = [
   {
@@ -37,7 +56,7 @@ export const KONFLIKTE: Konflikt[] = [
     seiten: [
       { name: 'Iran', konten: { khamenei_ir: 'Ali Chamenei', araghchi: 'Außenminister Araghtschi', IRIMFA_SPOX: 'Sprecher Außenministerium', drpezeshkian: 'Präsident Peseschkian' } },
       { name: 'USA', konten: { POTUS: 'US-Präsident', WhiteHouse: 'Weißes Haus', SecRubio: 'Außenminister Rubio', CENTCOM: 'US CENTCOM', StateDept: 'US-Außenministerium' } },
-      { name: 'Israel', konten: { IsraeliPM: 'Ministerpräsident', IDF: 'Israelische Armee', IsraelMFA: 'Außenministerium' } },
+      { name: 'Israel', konten: ISRAEL_KONTEN, listId: ISRAEL_LISTE_ID },
     ],
   },
   {
@@ -45,7 +64,7 @@ export const KONFLIKTE: Konflikt[] = [
     name: 'Gaza: Israel ↔ Palästinenser ↔ UN/Helfer',
     art: 'konflikt',
     seiten: [
-      { name: 'Israel', konten: { IsraeliPM: 'Ministerpräsident', IDF: 'Israelische Armee', IsraelMFA: 'Außenministerium', cogatonline: 'COGAT (Gaza-Koordination)' } },
+      { name: 'Israel', konten: ISRAEL_KONTEN, listId: ISRAEL_LISTE_ID },
       { name: 'Palästinenser', konten: { Palestine_UN: 'UN-Vertretung Palästinas', WAFANewsEnglish: 'Nachrichtenagentur WAFA (PA)', PalestineMOFA: 'Palästinensisches Außenministerium' } },
       { name: 'UN/Helfer', konten: { UNRWA: 'UNRWA', ochaopt: 'UN-Nothilfebüro OCHA (Gebiet)' } },
     ],
@@ -83,6 +102,51 @@ export const KONFLIKTE: Konflikt[] = [
       { name: 'Niederlande', konten: { MinPres: 'Ministerpräsident', DutchMFA: 'Außenministerium' } },
       { name: 'Belgien', konten: { Bart_DeWever: 'De Wever', BelgiumMFA: 'Außenministerium' } },
       { name: 'Österreich', konten: { BMeiA_Austria: 'Außenministerium' } },
+    ],
+  },
+  {
+    id: 'sudan',
+    name: 'Sudan: Armee (SAF) ↔ RSF',
+    art: 'konflikt',
+    seiten: [
+      { name: 'Sudanesische Armee (SAF)', konten: { SudaneseAF: 'Sprecher der Streitkräfte' } },
+      { name: 'RSF', konten: { RSFSudan: 'Rapid Support Forces' } },
+    ],
+  },
+  {
+    id: 'israel-libanon',
+    name: 'Israel ↔ Libanon',
+    art: 'konflikt',
+    seiten: [
+      { name: 'Israel', konten: ISRAEL_KONTEN, listId: ISRAEL_LISTE_ID },
+      { name: 'Libanon', konten: { mofalebanon1: 'Libanesisches Außenministerium' } },
+    ],
+  },
+  {
+    id: 'pakistan-indien',
+    name: 'Pakistan ↔ Indien',
+    art: 'konflikt',
+    seiten: [
+      { name: 'Pakistan', konten: { CMShehbaz: 'Premier Shehbaz Sharif', ForeignOfficePk: 'Außenministerium', OfficialDGISPR: 'Armee (ISPR)' } },
+      { name: 'Indien', konten: { narendramodi: 'Premierminister Modi', MEAIndia: 'Außenministerium', adgpi: 'Indische Armee' } },
+    ],
+  },
+  {
+    id: 'kongo-ruanda',
+    name: 'DR Kongo ↔ Ruanda (M23)',
+    art: 'konflikt',
+    seiten: [
+      { name: 'DR Kongo', konten: { Presidence_RDC: 'Präsidentschaft', FelixTshis13: 'Präsident Tshisekedi' } },
+      { name: 'Ruanda', konten: { PaulKagame: 'Präsident Kagame', RwandaGov: 'Regierung Ruandas' } },
+    ],
+  },
+  {
+    id: 'armenien-aserbaidschan',
+    name: 'Armenien ↔ Aserbaidschan',
+    art: 'konflikt',
+    seiten: [
+      { name: 'Armenien', konten: { MFAofArmenia: 'Außenministerium', NikolPashinyan: 'Premierminister Paschinjan', AraratMirzoyan: 'Außenminister Mirzoyan' } },
+      { name: 'Aserbaidschan', konten: { presidentaz: 'Präsident Aliyev', AzerbaijanMFA: 'Außenministerium' } },
     ],
   },
 ];
@@ -169,8 +233,14 @@ function istKonfliktAntwort(x: unknown): x is KonfliktAntwortRoh {
   return !!a && Array.isArray(a.themen) && a.themen.every((t) => typeof t.titel === 'string' && Array.isArray(t.positionen));
 }
 
+/** Handles der Seiten ohne eigene X-Liste - diese kommen über die kombinierte from:-Suche. */
 export function alleHandles(k: Konflikt): string[] {
-  return [...new Set(k.seiten.flatMap((s) => Object.keys(s.konten)))];
+  return [...new Set(k.seiten.filter((s) => !s.listId).flatMap((s) => Object.keys(s.konten)))];
+}
+
+/** Listen-IDs der Seiten mit eigener X-Liste (ohne Duplikate, falls mehrere Seiten dieselbe Liste nutzen). */
+export function listenIds(k: Konflikt): string[] {
+  return [...new Set(k.seiten.filter((s): s is Seite & { listId: string } => !!s.listId).map((s) => s.listId))];
 }
 
 /** Zu welcher Seite gehört ein Konto (bei mehrfach genutzten Konten die erste)? */
@@ -214,14 +284,25 @@ function stundenZurueck(jetzt: Date, std: number): string {
   return new Date(jetzt.getTime() - std * 3_600_000).toISOString();
 }
 
-/** Ein Konflikt: Tweets aller Seiten holen und per Gemini gegenüberstellen. null = keine Daten (alter Stand bleibt). */
+export type XListeSuche = (listId: string, seitIso: string) => Promise<Tweet[]>;
+
+/** Ein Konflikt: Tweets aller Seiten holen (Handles + ggf. X-Listen) und per Gemini gegenüberstellen. null = keine Daten (alter Stand bleibt). */
 export async function konfliktLageErstellen(
   k: Konflikt,
   suche: XSuche,
   geminiClient: GeminiClient,
   jetzt: Date = new Date(),
+  listeSuche?: XListeSuche,
 ): Promise<KonfliktLage | null> {
-  const tweets = await suche(alleHandles(k), stundenZurueck(jetzt, TWEETS_ZEITRAUM_STD));
+  const seit = stundenZurueck(jetzt, TWEETS_ZEITRAUM_STD);
+  const handles = alleHandles(k);
+  const handleTweets = handles.length > 0 ? await suche(handles, seit) : [];
+  const listenTweets: Tweet[] = [];
+  if (listeSuche) {
+    // Nacheinander statt parallel - eine Chrome-Automatisierung kann nicht zwei X-Abfragen gleichzeitig.
+    for (const id of listenIds(k)) listenTweets.push(...(await listeSuche(id, seit)));
+  }
+  const tweets = [...handleTweets, ...listenTweets];
   const eindeutig = [...new Map(tweets.map((t) => [t.id, t])).values()]
     .sort((a, b) => b.zeit.localeCompare(a.zeit))
     .slice(0, MAX_TWEETS);
