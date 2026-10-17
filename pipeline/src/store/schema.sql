@@ -59,3 +59,9 @@ CREATE TABLE IF NOT EXISTS x_stimmen (
   aktualisiert TEXT NOT NULL,
   daten TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS x_konflikte (
+  id TEXT PRIMARY KEY,
+  aktualisiert TEXT NOT NULL,
+  daten TEXT NOT NULL
+);

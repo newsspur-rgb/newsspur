@@ -3,7 +3,7 @@ import type { VerarbeitetesThema } from './pipelineTypen.js';
 import { bundestagAntwort, weitblickAntwort } from './bundestagWeitblick.js';
 import { bundestagSucheAntwort } from './bundestagSuche.js';
 import { gdeltUmwegAntwort } from './gdeltUmweg.js';
-import { xStimmenAntwort } from './xStimmen.js';
+import { konflikteAntwort, xStimmenAntwort } from './xStimmen.js';
 
 export interface Env {
   ASSETS: Fetcher;
@@ -184,6 +184,9 @@ export default {
     }
     if (url.pathname === '/api/weitblick') {
       return weitblickAntwort(env.DB, url.searchParams.get('woche'));
+    }
+    if (url.pathname === '/api/konflikte') {
+      return konflikteAntwort(env.DB);
     }
     if (url.pathname === '/api/x') {
       return xStimmenAntwort(env.DB);

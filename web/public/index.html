@@ -545,6 +545,18 @@
   .stmt-text { margin: 6px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
   .x-link { align-self: flex-start; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--red-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
   .x-link:hover { text-decoration: underline; }
+  .k-lage { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+  .k-seiten { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+  .k-seite { border: 1px solid var(--line-soft); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .k-seite-name { align-self: flex-start; font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; background: var(--ink); color: var(--paper); padding: 2px 7px 1px; }
+  .k-aussage { margin: 0; font-size: 13.5px; line-height: 1.45; }
+  .k-beleg { font-family: var(--font-mono); font-size: 9.5px; line-height: 1.5; color: var(--red-ink); text-decoration: none; }
+  .k-beleg:hover { text-decoration: underline; }
+  .k-widerspruch { margin: 0; padding: 9px 12px; border-left: 4px solid var(--red); font-size: 13px; line-height: 1.45; background: var(--paper-2, transparent); }
+  .k-widerspruch b { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--red-ink); display: block; margin-bottom: 3px; }
+  .k-thema { display: flex; flex-direction: column; gap: 9px; padding-top: 12px; }
+  .k-thema + .k-thema { border-top: 1px solid var(--line-soft); margin-top: 6px; }
+  .k-thema h4 { margin: 0; font-weight: 700; font-size: 16px; line-height: 1.25; }
   .x-link:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
   .welt { border: 1px solid var(--line-soft); padding: 12px 13px; display: flex; flex-direction: column; gap: 8px; }
   .welt-kopf { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -615,6 +627,7 @@
         <button class="tab" data-tab="bundestag">Bundestag</button>
         <button class="tab" data-tab="weitblick">Weitblick</button>
         <button class="tab" data-tab="x">X-Stimmen</button>
+        <button class="tab" data-tab="konflikte">Konflikte</button>
       </nav>
     </header>
 
@@ -694,10 +707,11 @@
   function renderFeed(tab) {
     const wrap = $('#cards');
     wrap.innerHTML = '';
-    $('#held').hidden = tab === 'bundestag' || tab === 'weitblick' || tab === 'x';
+    $('#held').hidden = tab === 'bundestag' || tab === 'weitblick' || tab === 'x' || tab === 'konflikte';
     if (tab === 'bundestag') return renderBundestag(wrap);
     if (tab === 'weitblick') return renderWeitblick(wrap);
     if (tab === 'x') return renderX(wrap);
+    if (tab === 'konflikte') return renderKonflikte(wrap);
     const list = STORIES.filter((s) => tab === 'alle' || katsOf(s).includes(tab));
     list.forEach((s, i) => {
       const c = card(s);
@@ -1079,6 +1093,81 @@
     });
     wrap.appendChild(filter);
     wrap.appendChild(liste);
+    zeichne();
+  }
+
+  // ---------- Konflikte ----------
+  let KONFLIKTE = null;
+  let konfliktFilter = 'alle';
+  const KONFLIKT_KURZ = { 'russland-ukraine': 'Russland · Ukraine', 'iran-usa-israel': 'Iran · USA · Israel', 'saudi-jemen': 'Saudi · Jemen', 'buendnis-tuerkei': 'Bündnis Türkei', 'eu-staaten': 'EU-Staaten' };
+  const KONFLIKT_REIHE = Object.keys(KONFLIKT_KURZ);
+  const WIDERSPRUCH_LABEL = { konflikt: 'Hier widersprechen sie sich', buendnis: 'Hier unterscheiden sie sich', positionen: 'Hier gehen die Positionen auseinander' };
+
+  async function renderKonflikte(wrap) {
+    if (!KONFLIKTE) {
+      leer(wrap, 'Lade Konflikte …');
+      try { KONFLIKTE = (await ladeJson('/api/konflikte')).konflikte || []; }
+      catch (e) { console.error(e); wrap.innerHTML = ''; return leer(wrap, 'Die Konflikte konnten nicht geladen werden.'); }
+      if (aktiverTab() !== 'konflikte') return;
+      wrap.innerHTML = '';
+    }
+    viewHead(wrap, 'Konflikte', 'Was sagen die Seiten selbst? Ihre Posts auf X, nebeneinandergestellt.');
+    const m = el('div', 'methode');
+    const mb = el('b'); mb.textContent = 'So arbeiten wir: '; m.appendChild(mb);
+    m.appendChild(document.createTextNode('Wir lesen die offiziellen X-Konten aller Beteiligten (Regierung, Armee, Außenministerium) und stellen gegenüber, was jede Seite zu denselben Ereignissen sagt. Das sind Darstellungen der Seiten – oft Propaganda, keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
+    wrap.appendChild(m);
+    if (!KONFLIKTE.length) return leer(wrap, 'Noch keine Auswertung – der nächste Lauf kommt in wenigen Stunden.');
+
+    const liste = KONFLIKTE.slice().sort((a, b) => KONFLIKT_REIHE.indexOf(a.id) - KONFLIKT_REIHE.indexOf(b.id));
+    if (konfliktFilter !== 'alle' && !liste.some((k) => k.id === konfliktFilter)) konfliktFilter = 'alle';
+    const filter = el('div', 'filter-row'); filter.style.padding = '14px 16px 0';
+    const inhalt = el('div');
+    const zeichne = () => {
+      inhalt.innerHTML = '';
+      liste.filter((k) => konfliktFilter === 'alle' || k.id === konfliktFilter).forEach((k) => {
+        const box = el('div', 'entwicklung');
+        const nr = el('span', 'entwicklung-nr'); nr.textContent = 'Stand ' + relativZeit(k.aktualisiert); box.appendChild(nr);
+        const h = el('h3'); h.textContent = k.name; box.appendChild(h);
+        k.themen.forEach((t) => {
+          const th = el('div', 'k-thema');
+          const h4 = el('h4'); h4.textContent = t.titel; th.appendChild(h4);
+          if (t.lage) { const l = el('p', 'k-lage'); l.textContent = t.lage; th.appendChild(l); }
+          const seiten = el('div', 'k-seiten');
+          t.positionen.forEach((p) => {
+            const sp = el('div', 'k-seite');
+            const n = el('span', 'k-seite-name'); n.textContent = p.seite; sp.appendChild(n);
+            const a = el('p', 'k-aussage'); a.textContent = p.aussage; sp.appendChild(a);
+            p.belege.forEach((b) => {
+              const link = el('a', 'k-beleg'); link.href = b.url; link.target = '_blank'; link.rel = 'noopener';
+              link.textContent = b.konto + ' · ' + relativZeit(b.zeit) + ' ↗'; link.title = b.text;
+              sp.appendChild(link);
+            });
+            seiten.appendChild(sp);
+          });
+          th.appendChild(seiten);
+          if (t.widerspruch) {
+            const w = el('p', 'k-widerspruch');
+            const wb = el('b'); wb.textContent = WIDERSPRUCH_LABEL[k.art] || 'Widerspruch'; w.appendChild(wb);
+            w.appendChild(document.createTextNode(t.widerspruch));
+            th.appendChild(w);
+          }
+          box.appendChild(th);
+        });
+        inhalt.appendChild(box);
+      });
+    };
+    [['alle', 'Alle']].concat(liste.map((k) => [k.id, KONFLIKT_KURZ[k.id] || k.name])).forEach(([wert, text]) => {
+      const b = el('button', 'filter-btn' + (konfliktFilter === wert ? ' is-active' : ''));
+      b.type = 'button'; b.textContent = text;
+      b.addEventListener('click', () => {
+        konfliktFilter = wert;
+        filter.querySelectorAll('.filter-btn').forEach((y) => y.classList.toggle('is-active', y === b));
+        zeichne();
+      });
+      filter.appendChild(b);
+    });
+    wrap.appendChild(filter);
+    wrap.appendChild(inhalt);
     zeichne();
   }
 

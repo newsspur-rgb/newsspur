@@ -1,6 +1,7 @@
 import type { D1Abfrage } from '../store/d1Abfrage.js';
 import type { XStimmenStore } from './xStimmen.js';
 import type { XThema } from './typen.js';
+import type { KonflikteStore } from './konflikte.js';
 
 export function erstelleD1XStimmenStore(abfragen: D1Abfrage): XStimmenStore {
   return {
@@ -24,5 +25,17 @@ export function erstelleSpeicherXStimmenStore(): XStimmenStore & { alle: Map<str
     alle,
     async speichern(thema) { alle.set(thema.id, thema); },
     async seit(iso) { return [...alle.values()].filter((t) => t.aktualisiert >= iso); },
+  };
+}
+
+export function erstelleD1KonflikteStore(abfragen: D1Abfrage): KonflikteStore {
+  return {
+    async speichern(lage) {
+      await abfragen(
+        `INSERT INTO x_konflikte (id, aktualisiert, daten) VALUES (?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET aktualisiert = excluded.aktualisiert, daten = excluded.daten`,
+        [lage.id, lage.aktualisiert, JSON.stringify(lage)],
+      );
+    },
   };
 }

@@ -12,3 +12,9 @@ export async function xStimmenAntwort(db: D1Database, jetzt: Date = new Date()):
     .all<{ daten: string }>();
   return Response.json({ themen: zeilen.results.map((z) => JSON.parse(z.daten)) });
 }
+
+/** Aktueller Stand je Konflikt (Gegenüberstellung der Seiten), siehe pipeline/src/xstimmen/konflikte.ts. */
+export async function konflikteAntwort(db: D1Database): Promise<Response> {
+  const zeilen = await db.prepare('SELECT daten FROM x_konflikte ORDER BY aktualisiert DESC').all<{ daten: string }>();
+  return Response.json({ konflikte: zeilen.results.map((z) => JSON.parse(z.daten)) });
+}
