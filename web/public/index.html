@@ -1185,7 +1185,7 @@
         const box = el('div', 'entwicklung');
         const nr = el('span', 'entwicklung-nr'); nr.textContent = 'Stand ' + relativZeit(k.aktualisiert); box.appendChild(nr);
         const h = el('h3'); h.textContent = k.name; box.appendChild(h);
-        k.themen.forEach((t) => {
+        k.themen.filter((t) => Array.isArray(t.verlauf)).forEach((t) => { // alte Datensaetze (vor dem Umbau auf Verlauf) ueberspringen, bis der naechste Lauf sie ueberschreibt
           const th = el('div', 'k-thema');
           const h4 = el('h4'); h4.textContent = t.titel; th.appendChild(h4);
           if (t.lage) { const l = el('p', 'k-lage'); l.textContent = t.lage; th.appendChild(l); }
