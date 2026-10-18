@@ -14,6 +14,8 @@ import { kartePngErzeugen } from './social/renderCard.js';
 import { erstelleD1KartenSpeicher } from './social/kartenSpeicher.js';
 import { erstelleInstagramClient } from './social/instagramClient.js';
 import { captionErstellen } from './social/caption.js';
+import { hookErstellen } from './social/hook.js';
+import type { GeminiClient } from './summarize/geminiClient.js';
 import { D1PushAbosStore } from './push/pushAbosStore.js';
 import { erstelleWebPushClient } from './push/webPushClient.js';
 import { abosFuerThema } from './push/auswahl.js';
@@ -35,7 +37,7 @@ function erstelleStore(): ThemenStore {
   return new SpeicherThemenStore();
 }
 
-function erstelleSocialPoster(): SocialPoster | undefined {
+function erstelleSocialPoster(geminiClient: GeminiClient): SocialPoster | undefined {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN, INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID } = process.env;
   if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_D1_DATABASE_ID || !CLOUDFLARE_API_TOKEN || !INSTAGRAM_ACCESS_TOKEN || !INSTAGRAM_BUSINESS_ACCOUNT_ID) {
     console.log('Instagram-Posting: uebersprungen (keine Zugangsdaten gefunden)');
@@ -50,7 +52,8 @@ function erstelleSocialPoster(): SocialPoster | undefined {
     const png = await kartePngErzeugen(zusammenfassung, foto);
     await kartenSpeicher.speichern(thema.id, png);
     const kartenBildUrl = `https://newsspur.de/karte/${thema.id}.png`;
-    await instagram.bildPosten(kartenBildUrl, captionErstellen(zusammenfassung, quellArtikel.url));
+    const hook = await hookErstellen(zusammenfassung, thema, geminiClient);
+    await instagram.bildPosten(kartenBildUrl, captionErstellen(zusammenfassung, quellArtikel.url, hook));
   };
 }
 
@@ -83,7 +86,7 @@ function erstellePushBenachrichtiger(): PushBenachrichtiger | undefined {
   };
 }
 
-function erstelleReelPoster(): ReelPoster | undefined {
+function erstelleReelPoster(geminiClient: GeminiClient): ReelPoster | undefined {
   const {
     CLOUDFLARE_ACCOUNT_ID,
     CLOUDFLARE_D1_DATABASE_ID,
@@ -120,7 +123,8 @@ function erstelleReelPoster(): ReelPoster | undefined {
 
     const quellArtikel = thema.artikel.find((a) => a.bildUrl) ?? thema.artikel[0];
     const reelUrl = `https://newsspur.de/reel/${thema.id}.mp4`;
-    await instagram.reelPosten(reelUrl, captionErstellen(zusammenfassung, quellArtikel.url));
+    const hook = await hookErstellen(zusammenfassung, thema, geminiClient);
+    await instagram.reelPosten(reelUrl, captionErstellen(zusammenfassung, quellArtikel.url, hook));
   };
 }
 
@@ -167,13 +171,14 @@ async function main(): Promise<void> {
 
   const store = erstelleStore();
   const vorLauf = new Date().toISOString();
+  const geminiClient = erstelleGeminiClient(apiKey);
   const ergebnis = await pipelineLauf(alle, {
     store,
-    geminiClient: erstelleGeminiClient(apiKey),
+    geminiClient,
     embedFn: erstelleGeminiEmbedFn(apiKey),
-    socialPoster: erstelleSocialPoster(),
+    socialPoster: erstelleSocialPoster(geminiClient),
     pushBenachrichtiger: erstellePushBenachrichtiger(),
-    reelPoster: erstelleReelPoster(),
+    reelPoster: erstelleReelPoster(geminiClient),
   });
 
   console.log('Ergebnis:', ergebnis, '\n');

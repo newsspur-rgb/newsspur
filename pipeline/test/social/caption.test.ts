@@ -36,6 +36,15 @@ describe('captionErstellen', () => {
     expect(caption).toContain('#Nachrichten');
   });
 
+  it('nutzt hoechstens 5 Hashtags (Instagram-Obergrenze seit Dez. 2025)', () => {
+    const caption = captionErstellen(
+      beispiel({ kategorieWerte: { deutschland: 90, tuerkei: 90, nahost: 90 } }),
+      'https://quelle.example/artikel-1',
+    );
+    const hashtagZeile = caption.split('\n').at(-1)!;
+    expect(hashtagZeile.split(' ')).toHaveLength(5);
+  });
+
   it('kuerzt eine sehr lange Zusammenfassung', () => {
     const lang = 'x'.repeat(500);
     const caption = captionErstellen(beispiel({ zusammenfassung: lang }), 'https://quelle.example/artikel-1');

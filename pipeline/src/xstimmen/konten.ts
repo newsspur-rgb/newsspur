@@ -3,15 +3,15 @@ import type { Kategorie } from '../rules/kategorien.js';
 /** Ländergruppen der X-Stimmen. Die ersten drei entsprechen den newsspur-Kategorien. */
 export type XGruppe = Kategorie | 'usa' | 'westeuropa' | 'eu' | 'russland' | 'china' | 'japan';
 
-export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'nahost', 'usa', 'westeuropa', 'eu', 'russland', 'china', 'japan'];
+export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'nahost', 'usa', 'eu', 'westeuropa', 'russland', 'china', 'japan'];
 
 export const X_GRUPPE_NAME: Record<XGruppe, string> = {
   deutschland: 'Deutschland',
   tuerkei: 'Türkei',
   nahost: 'Naher Osten (Israel/Palästina, Iran, Syrien, Irak)',
   usa: 'USA',
-  westeuropa: 'Frankreich, Großbritannien, Spanien, Belgien',
   eu: 'Europäische Union',
+  westeuropa: 'Frankreich, Großbritannien, Spanien, Belgien',
   russland: 'Russland',
   china: 'China',
   japan: 'Japan',
@@ -94,6 +94,16 @@ export const X_KONTEN: Record<XGruppe, Record<string, string>> = {
     AP: 'Associated Press',
     cnnbrk: 'CNN Breaking News',
   },
+  eu: {
+    vonderleyen: 'Ursula von der Leyen',
+    EU_Commission: 'EU-Kommission',
+    eucopresident: 'EU-Ratspräsident',
+    EUCouncil: 'Rat der EU',
+    Europarl_EN: 'Europäisches Parlament',
+    EP_President: 'Präsidentin EU-Parlament',
+    kajakallas: 'EU-Außenbeauftragte Kallas',
+    eu_eeas: 'Europäischer Auswärtiger Dienst',
+  },
   westeuropa: {
     EmmanuelMacron: 'Emmanuel Macron',
     Elysee: 'Élysée-Palast',
@@ -106,16 +116,6 @@ export const X_KONTEN: Record<XGruppe, Record<string, string>> = {
     MAECgob: 'Spanisches Außenministerium',
     Bart_DeWever: 'Bart De Wever (Belgien)',
     BelgiumMFA: 'Belgisches Außenministerium',
-  },
-  eu: {
-    vonderleyen: 'Ursula von der Leyen',
-    EU_Commission: 'EU-Kommission',
-    eucopresident: 'EU-Ratspräsident',
-    EUCouncil: 'Rat der EU',
-    Europarl_EN: 'Europäisches Parlament',
-    EP_President: 'Präsidentin EU-Parlament',
-    kajakallas: 'EU-Außenbeauftragte Kallas',
-    eu_eeas: 'Europäischer Auswärtiger Dienst',
   },
   russland: {
     mfa_russia: 'Russisches Außenministerium',
