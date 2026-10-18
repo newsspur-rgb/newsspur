@@ -95,10 +95,10 @@ export const KONFLIKTE: Konflikt[] = [
   },
   {
     id: 'buendnis-tuerkei',
-    name: 'Bündnis Türkei – Pakistan – Saudi-Arabien – Aserbaidschan',
+    name: 'Bündnis Türkiye – Pakistan – Saudi-Arabien – Aserbaidschan',
     art: 'buendnis',
     seiten: [
-      { name: 'Türkei', konten: { RTErdogan: 'Erdoğan', HakanFidan: 'Außenminister Fidan', TC_Disisleri: 'Außenministerium', tcsavunma: 'Verteidigungsministerium' } },
+      { name: 'Türkiye', konten: { RTErdogan: 'Erdoğan', HakanFidan: 'Außenminister Fidan', TC_Disisleri: 'Außenministerium', tcsavunma: 'Verteidigungsministerium' } },
       { name: 'Pakistan', konten: { CMShehbaz: 'Premier Shehbaz Sharif', ForeignOfficePk: 'Außenministerium', OfficialDGISPR: 'Armee (ISPR)' } },
       { name: 'Saudi-Arabien', konten: { KSAmofaEN: 'Außenministerium' } },
       { name: 'Aserbaidschan', konten: { presidentaz: 'Präsident Aliyev', AzerbaijanMFA: 'Außenministerium' } },

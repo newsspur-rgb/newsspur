@@ -7,7 +7,7 @@ export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'nahost', 'usa', 
 
 export const X_GRUPPE_NAME: Record<XGruppe, string> = {
   deutschland: 'Deutschland',
-  tuerkei: 'Türkei',
+  tuerkei: 'Türkiye',
   nahost: 'Naher Osten (Israel/Palästina, Iran, Syrien, Irak)',
   usa: 'USA',
   eu: 'Europäische Union',
