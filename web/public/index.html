@@ -819,7 +819,7 @@
     return li;
   }
 
-  const THEMEN = ['Schuldenbremse', 'Rente', 'Bürgergeld', 'Migration', 'Wehrdienst', 'Mindestlohn', 'Mietpreisbremse', 'Klimaschutz'];
+  const THEMEN = ['Rente', 'Bürgergeld', 'Mindestlohn', 'Mietpreisbremse', 'Immobilien', 'Energiepreise', 'Gesundheit', 'Migration', 'Wehrdienst', 'Klimaschutz'];
   const AMPEL_LABEL_SUCHE = Object.assign({ beantwortet: 'Beantwortet' }, AMPEL_LABEL);
 
   function trefferZeile(t) {
@@ -889,7 +889,7 @@
       const knoepfe = el('div', 'filter-row');
       const form = el('form', 'such-form');
       const input = el('input', 'such-input');
-      input.type = 'search'; input.placeholder = 'Thema suchen, z. B. Schuldenbremse'; input.minLength = 3; input.maxLength = 60;
+      input.type = 'search'; input.placeholder = 'Thema suchen, z. B. Rente'; input.minLength = 3; input.maxLength = 60;
       input.setAttribute('aria-label', 'Thema im Bundestag suchen');
       const btn = el('button', 'such-btn'); btn.type = 'submit'; btn.textContent = 'Suchen';
       form.appendChild(input); form.appendChild(btn);
@@ -1101,14 +1101,14 @@
     return ul;
   }
 
-  const X_GRUPPE_LABEL = { deutschland: 'Deutschland', tuerkei: 'Türkiye', nahost: 'Nahost', iran: 'Iran', usa: 'USA', westeuropa: 'FR · UK · ES · BE', eu: 'EU' };
+  const X_GRUPPE_LABEL = { deutschland: 'Deutschland', tuerkei: 'Türkiye', nahost: 'Nahost', usa: 'USA', westeuropa: 'FR · UK · ES · BE', eu: 'EU', russland: 'Russland', china: 'China', japan: 'Japan' };
   let xFilter = 'alle';
 
   function renderX(wrap) {
     viewHead(wrap, 'X-Stimmen', 'Worüber Regierungen, Parteien und Behörden auf X sprechen – zusammengefasst.');
     const m = el('div', 'methode');
     const mb = el('b'); mb.textContent = 'So arbeiten wir: '; m.appendChild(mb);
-    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten – Regierungen, Ministerien, Parteien und große Redaktionen aus Deutschland, der Türkei, Israel, Iran, den USA, Frankreich, Großbritannien, Spanien, Belgien und der EU. Eine KI bündelt sie zu Themen, übersetzt und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
+    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten – Regierungen, Ministerien, Parteien und große Redaktionen aus Deutschland, der Türkei, dem Nahen Osten (Israel, Iran, Syrien, Irak), den USA, Frankreich, Großbritannien, Spanien, Belgien, der EU, Russland, China und Japan. Eine KI bündelt sie zu Themen, übersetzt und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
     wrap.appendChild(m);
     if (!XTHEMEN.length) return leer(wrap, 'Gerade keine X-Stimmen – der nächste Lauf kommt in wenigen Stunden.');
 

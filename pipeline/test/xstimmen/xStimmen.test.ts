@@ -117,7 +117,7 @@ describe('xStimmenErstellen', () => {
 
     const ergebnis = await xStimmenErstellen({ themenStore, geminiClient, suche, store, jetzt: JETZT, pauseMs: 0 });
 
-    expect(suche).toHaveBeenCalledTimes(7);
+    expect(suche).toHaveBeenCalledTimes(9);
     expect(geminiClient.strukturierteAntwort).toHaveBeenCalledTimes(1); // nur Deutschland hatte Tweets
     expect(ergebnis).toHaveLength(2);
     const [fortgesetzt, neu] = ergebnis;

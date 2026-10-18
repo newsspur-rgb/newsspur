@@ -1,18 +1,31 @@
 import type { Kategorie } from '../rules/kategorien.js';
 
 /** Ländergruppen der X-Stimmen. Die ersten drei entsprechen den newsspur-Kategorien. */
-export type XGruppe = Kategorie | 'iran' | 'usa' | 'westeuropa' | 'eu';
+export type XGruppe = Kategorie | 'usa' | 'westeuropa' | 'eu' | 'russland' | 'china' | 'japan';
 
-export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'nahost', 'iran', 'usa', 'westeuropa', 'eu'];
+export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'nahost', 'usa', 'westeuropa', 'eu', 'russland', 'china', 'japan'];
 
 export const X_GRUPPE_NAME: Record<XGruppe, string> = {
   deutschland: 'Deutschland',
   tuerkei: 'Türkei',
-  nahost: 'Nahost-Konflikt (Israel/Palästina)',
-  iran: 'Iran',
+  nahost: 'Naher Osten (Israel/Palästina, Iran, Syrien, Irak)',
   usa: 'USA',
   westeuropa: 'Frankreich, Großbritannien, Spanien, Belgien',
   eu: 'Europäische Union',
+  russland: 'Russland',
+  china: 'China',
+  japan: 'Japan',
+};
+
+/**
+ * Nebenländer (nicht im Fokus wie DE/TR/Nahost/USA/EU) - hier nur Themen von echtem
+ * Gewicht aufnehmen (Kriege/Konflikte, harte Vorgehen/Repression, große Krisen),
+ * keine Alltagspolitik oder Propaganda-Nebensächlichkeiten.
+ */
+export const X_GRUPPE_FOKUS: Partial<Record<XGruppe, string>> = {
+  russland: 'Nur Kriege/Konflikte (v. a. Ukraine), harte Vorgehen gegen Opposition/Kriminalität und vergleichbar wichtige Themen - keine Alltagspolitik.',
+  china: 'Nur Kriege/Konflikte (z. B. Taiwan, Südchinesisches Meer), harte Vorgehen gegen Kriminalität/Opposition und vergleichbar wichtige Themen - keine Alltagspolitik.',
+  japan: 'Nur Kriege/Konflikte, Sicherheitspolitik und vergleichbar wichtige Themen - keine Alltagspolitik.',
 };
 
 /**
@@ -51,26 +64,22 @@ export const X_KONTEN: Record<XGruppe, Record<string, string>> = {
     dwturkce: 'DW Türkçe',
     bbcturkce: 'BBC Türkçe',
   },
+  // Max. ~16 Konten (Länge der kombinierten from:-Suchanfrage) - deshalb bewusst nur
+  // Regierungen/Staatschefs je Land statt zusätzlicher Medien-Konten.
   nahost: {
     IsraeliPM: 'Israels Ministerpräsident',
     IsraelMFA: 'Israels Außenministerium',
     IDF: 'Israelische Armee',
     UNRWA: 'UNRWA',
     ochaopt: 'UN OCHA (Palästina)',
-    ICRC: 'Rotes Kreuz (IKRK)',
-    CENTCOM: 'US CENTCOM',
+    khamenei_ir: 'Irans Ali Chamenei',
+    drpezeshkian: 'Irans Präsident Peseschkian',
+    araghchi: 'Irans Außenminister Araghtschi',
+    AH_AlSharaa: 'Syriens Präsident Ahmed al-Scharaa',
+    syrianmofaex: 'Syrisches Außenministerium',
+    IraqiPMO: 'Büro des irakischen Ministerpräsidenten',
+    Iraqimofa: 'Irakisches Außenministerium',
     AJEnglish: 'Al Jazeera English',
-    BBCBreaking: 'BBC Breaking News',
-    Reuters: 'Reuters',
-  },
-  iran: {
-    khamenei_ir: 'Ali Chamenei',
-    drpezeshkian: 'Präsident Peseschkian',
-    araghchi: 'Außenminister Araghtschi',
-    IRIMFA_SPOX: 'Sprecher Iran-Außenministerium',
-    IranIntl_En: 'Iran International',
-    PressTV: 'Press TV (Staatssender)',
-    BBCPersian: 'BBC Persian',
   },
   usa: {
     POTUS: 'US-Präsident',
@@ -107,6 +116,20 @@ export const X_KONTEN: Record<XGruppe, Record<string, string>> = {
     EP_President: 'Präsidentin EU-Parlament',
     kajakallas: 'EU-Außenbeauftragte Kallas',
     eu_eeas: 'Europäischer Auswärtiger Dienst',
+  },
+  russland: {
+    mfa_russia: 'Russisches Außenministerium',
+    KremlinRussia_E: 'Kreml',
+    tass_agency: 'TASS (Staatsagentur)',
+  },
+  china: {
+    MFA_China: 'Chinesisches Außenministerium',
+    XHNews: 'Xinhua (Staatsagentur)',
+  },
+  japan: {
+    JPN_PMO: 'Büro des japanischen Premierministers',
+    MofaJapan_en: 'Japanisches Außenministerium',
+    NHKWORLD_News: 'NHK World',
   },
 };
 
