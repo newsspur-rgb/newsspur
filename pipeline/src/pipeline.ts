@@ -20,6 +20,12 @@ export interface PipelineAbhaengigkeiten {
   socialPoster?: SocialPoster;
   pushBenachrichtiger?: PushBenachrichtiger;
   reelPoster?: ReelPoster;
+  /**
+   * Fuer den ersten echten Lauf: statt sofort jede veroeffentlichte Meldung zu posten, nur die
+   * N wichtigsten des Laufs (nach zusammenfassung.wichtigkeit). Ohne Angabe (Normalbetrieb):
+   * unveraendertes Verhalten, jede Meldung wird sofort gepostet.
+   */
+  socialPostLimit?: number;
 }
 
 export interface PipelineErgebnis {
@@ -46,6 +52,7 @@ export async function pipelineLauf(
   let veroeffentlicht = 0;
   let zurueckgehalten = 0;
   let fehler = 0;
+  const socialKandidaten: Array<{ thema: Thema; zusammenfassung: ThemenZusammenfassung }> = [];
 
   for (const thema of zuVerarbeiten) {
     const unabhaengigkeit = unabhaengigkeitPruefen(thema);
@@ -89,10 +96,14 @@ export async function pipelineLauf(
     veroeffentlicht++;
 
     if (deps.socialPoster) {
-      try {
-        await deps.socialPoster(thema, gepruefte);
-      } catch (fehlerUrsache) {
-        console.warn(`Social-Posting fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
+      if (deps.socialPostLimit === undefined) {
+        try {
+          await deps.socialPoster(thema, gepruefte);
+        } catch (fehlerUrsache) {
+          console.warn(`Social-Posting fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
+        }
+      } else {
+        socialKandidaten.push({ thema, zusammenfassung: gepruefte });
       }
     }
 
@@ -109,6 +120,19 @@ export async function pipelineLauf(
         await deps.reelPoster(thema, gepruefte);
       } catch (fehlerUrsache) {
         console.warn(`Reel-Erzeugung fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
+      }
+    }
+  }
+
+  if (deps.socialPoster && deps.socialPostLimit !== undefined) {
+    const topN = socialKandidaten
+      .sort((a, b) => b.zusammenfassung.wichtigkeit - a.zusammenfassung.wichtigkeit)
+      .slice(0, deps.socialPostLimit);
+    for (const { thema, zusammenfassung } of topN) {
+      try {
+        await deps.socialPoster(thema, zusammenfassung);
+      } catch (fehlerUrsache) {
+        console.warn(`Social-Posting fuer Thema ${thema.id} fehlgeschlagen (Meldung bleibt trotzdem veroeffentlicht):`, fehlerUrsache);
       }
     }
   }

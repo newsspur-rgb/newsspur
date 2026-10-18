@@ -203,4 +203,40 @@ describe('pipelineLauf', () => {
     const alle = await store.alle();
     expect(alle[0].status).toBe('veroeffentlicht');
   });
+
+  it('postet mit socialPostLimit nur die wichtigste(n) Meldung(en), erst nach dem ganzen Lauf', async () => {
+    const store = new SpeicherThemenStore();
+    const a1 = art({ id: 'a1', url: 'https://a.de/1', quelle: qA, titel: 'Erdogan trifft Kanzler in Berlin', teaser: 'Der tuerkische Praesident traf den Kanzler in Berlin.' });
+    const a2 = art({ id: 'a2', url: 'https://b.de/1', quelle: qB, titel: 'Erdogan in Berlin beim Kanzler', teaser: 'Treffen zwischen Erdogan und dem Kanzler in Berlin.' });
+    const a3 = art({ id: 'a3', url: 'https://a.de/2', quelle: qA, titel: 'Schweres Erdbeben erschuettert Grossstadt', teaser: 'Ein schweres Erdbeben hat eine Grossstadt getroffen, viele Verletzte.' });
+    const a4 = art({ id: 'a4', url: 'https://b.de/2', quelle: qB, titel: 'Erdbeben trifft Grossstadt schwer', teaser: 'Ein schweres Erdbeben erschuetterte die Grossstadt, zahlreiche Verletzte gemeldet.' });
+
+    const gemini: GeminiClient = {
+      strukturierteAntwort: vi.fn(async (prompt: unknown) => {
+        const istErdbeben = typeof prompt === 'string' && prompt.includes('Erdbeben');
+        return istErdbeben
+          ? {
+              schlagzeile: 'Schweres Erdbeben erschuettert Grossstadt', zusammenfassung: 'Ein Erdbeben hat die Grossstadt getroffen.',
+              kategorieWerte: { deutschland: 90, tuerkei: 0, nahost: 0 },
+              wichtigkeit: 95, wichtigkeitBegruendung: 'Katastrophe',
+              fakten: [{ text: 'Ein Erdbeben erschuetterte die Grossstadt.', belegtDurch: ['zeit', 'tagesschau'] }],
+              strittigePunkte: [], sicherheit: 'hoch',
+            }
+          : {
+              schlagzeile: 'Erdogan trifft Kanzler in Berlin', zusammenfassung: 'Der tuerkische Praesident traf den Bundeskanzler in Berlin.',
+              kategorieWerte: { deutschland: 90, tuerkei: 95, nahost: 5 },
+              wichtigkeit: 60, wichtigkeitBegruendung: 'Staatsbesuch',
+              fakten: [{ text: 'Erdogan traf den Kanzler in Berlin.', belegtDurch: ['zeit', 'tagesschau'] }],
+              strittigePunkte: [], sicherheit: 'hoch',
+            };
+      }),
+    };
+    const socialPoster = vi.fn(async () => {});
+
+    const ergebnis = await pipelineLauf([a1, a2, a3, a4], { store, geminiClient: gemini, socialPoster, socialPostLimit: 1 });
+
+    expect(ergebnis.veroeffentlicht).toBe(2);
+    expect(socialPoster).toHaveBeenCalledTimes(1);
+    expect(socialPoster.mock.calls[0][1].schlagzeile).toBe('Schweres Erdbeben erschuettert Grossstadt');
+  });
 });

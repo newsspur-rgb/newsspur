@@ -172,6 +172,11 @@ async function main(): Promise<void> {
   const store = erstelleStore();
   const vorLauf = new Date().toISOString();
   const geminiClient = erstelleGeminiClient(apiKey);
+  // SOCIAL_POST_LIMIT=1 fuer den ersten echten Lauf - postet nur die wichtigste Meldung statt
+  // gleich alle. Ohne die Variable (Normalbetrieb): unveraendert jede Meldung sofort.
+  const socialPostLimitRoh = process.env.SOCIAL_POST_LIMIT;
+  const socialPostLimit = socialPostLimitRoh ? Number(socialPostLimitRoh) : undefined;
+  if (socialPostLimit !== undefined) console.log(`Instagram-Posting: Testmodus, nur die ${socialPostLimit} wichtigste(n) Meldung(en)`);
   const ergebnis = await pipelineLauf(alle, {
     store,
     geminiClient,
@@ -179,6 +184,7 @@ async function main(): Promise<void> {
     socialPoster: erstelleSocialPoster(geminiClient),
     pushBenachrichtiger: erstellePushBenachrichtiger(),
     reelPoster: erstelleReelPoster(geminiClient),
+    socialPostLimit,
   });
 
   console.log('Ergebnis:', ergebnis, '\n');
