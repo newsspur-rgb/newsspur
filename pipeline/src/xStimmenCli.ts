@@ -65,7 +65,7 @@ async function main(): Promise<void> {
       const lage = await konfliktLageErstellen(k, suche, geminiClient, undefined, listeSuche);
       if (!lage) { console.log(`- Konflikt ${k.id}: keine Posts, alter Stand bleibt`); continue; }
       await konflikteStore.speichern(lage);
-      console.log(`- Konflikt ${k.id}: ${lage.themen.map((t) => `${t.titel} [${t.positionen.map((p) => p.seite).join('/')}]`).join(' | ')}`);
+      console.log(`- Konflikt ${k.id}: ${lage.themen.map((t) => `${t.titel} [${t.verlauf.map((e) => e.seite).join('/')}]`).join(' | ')}`);
     } catch (fehlerUrsache) {
       console.warn(`Konflikt ${k.id} fehlgeschlagen:`, fehlerUrsache);
     }

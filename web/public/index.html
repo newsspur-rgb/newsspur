@@ -546,9 +546,12 @@
   .x-link { align-self: flex-start; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--red-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
   .x-link:hover { text-decoration: underline; }
   .k-lage { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
-  .k-seiten { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
-  .k-seite { border: 1px solid var(--line-soft); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .k-verlauf { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--line-soft); }
+  .k-eintrag { padding: 0 0 14px 14px; margin-left: -1px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+  .k-eintrag:last-child { padding-bottom: 0; }
+  .k-eintrag.ist-unabhaengig { border-left-color: var(--line-soft); }
   .k-seite-name { align-self: flex-start; font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; background: var(--ink); color: var(--paper); padding: 2px 7px 1px; }
+  .k-eintrag.ist-unabhaengig .k-seite-name { background: transparent; color: var(--ink-3); border: 1px solid var(--line-soft); }
   .k-aussage { margin: 0; font-size: 13.5px; line-height: 1.45; }
   .k-beleg { font-family: var(--font-mono); font-size: 9.5px; line-height: 1.5; color: var(--red-ink); text-decoration: none; }
   .k-beleg:hover { text-decoration: underline; }
@@ -1186,21 +1189,21 @@
           const th = el('div', 'k-thema');
           const h4 = el('h4'); h4.textContent = t.titel; th.appendChild(h4);
           if (t.lage) { const l = el('p', 'k-lage'); l.textContent = t.lage; th.appendChild(l); }
-          const seiten = el('div', 'k-seiten');
-          t.positionen.forEach((p) => {
-            const sp = el('div', 'k-seite');
-            const n = el('span', 'k-seite-name'); n.textContent = p.seite; sp.appendChild(n);
-            const a = el('p', 'k-aussage'); a.textContent = p.aussage; sp.appendChild(a);
-            p.belege.forEach((b) => {
+          const verlauf = el('ol', 'k-verlauf');
+          t.verlauf.forEach((e) => {
+            const li = el('li', 'k-eintrag' + (e.seite === 'Unabhängige Stimmen' ? ' ist-unabhaengig' : ''));
+            const n = el('span', 'k-seite-name'); n.textContent = e.seite; li.appendChild(n);
+            const a = el('p', 'k-aussage'); a.textContent = e.aussage; li.appendChild(a);
+            e.belege.forEach((b) => {
               const medien = belegMedien(b);
-              if (medien) sp.appendChild(medien);
+              if (medien) li.appendChild(medien);
               const link = el('a', 'k-beleg'); link.href = b.url; link.target = '_blank'; link.rel = 'noopener';
               link.textContent = b.konto + ' · ' + relativZeit(b.zeit) + ' ↗'; link.title = b.text;
-              sp.appendChild(link);
+              li.appendChild(link);
             });
-            seiten.appendChild(sp);
+            verlauf.appendChild(li);
           });
-          th.appendChild(seiten);
+          th.appendChild(verlauf);
           if (t.widerspruch) {
             const w = el('p', 'k-widerspruch');
             const wb = el('b'); wb.textContent = WIDERSPRUCH_LABEL[k.art] || 'Widerspruch'; w.appendChild(wb);
