@@ -1,5 +1,33 @@
 # NEWSSPUR – Stand & nächste Schritte
 
+## Etappe 3 fertig (18.10., Commit `1b4e674` + Hotfix `5261f68`): Chronologischer Verlauf + unabhängige Stimmen
+
+Nutzerwunsch, inspiriert vom YouTube-Kanal **GorbiX** (Scripts von 3 Videos geholt und analysiert): Konflikte nicht
+mehr als feste "Seite A sagt / Seite B sagt"-Blöcke, sondern als zeitlich geordneter Verlauf wie ein Liveticker -
+Aussage, Reaktion, nächste Reaktion, auch von derselben Seite mehrfach. Dazu: nicht nur Regierungen, auch
+unabhängige Stimmen, "damit Leser verstehen, wer lügt" (Nutzerzitat).
+
+Umgesetzt: `KonfliktThema.positionen` → `verlauf` (`KonfliktEintrag[]`, nach Tweet-Zeit sortiert statt nach Seite
+gruppiert, max. 8 Einträge/Thema). Neue geteilte X-Liste **„NS Unabhängige Stimmen"** (ID `2111818418999468119`:
+Mario Nawfal, Eric Daugherty, OSINTdefender, Megatron, Disclose.tv, Visegrád 24, Clash Report) - bei **allen 11**
+Konflikten als zusätzliche Seite dabei (dieselbe Liste, nur 1 Extra-Abfrage/Lauf dank Cache), im Prompt und im
+Frontend klar als "unabhängig" markiert (graues Badge statt schwarzes), damit nicht mit einer offiziellen Position
+verwechselt wird. Frontend: Timeline mit vertikaler Linie statt Spalten-Grid.
+
+**Live-Bug gefunden und sofort gefixt:** Nach dem Deploy krachte der Konflikte-Tab komplett (`Cannot read
+properties of undefined reading 'forEach'`), weil alte D1-Datensätze noch `positionen` statt `verlauf` hatten.
+Hotfix: alte Themen ohne `verlauf`-Feld werden beim Rendern übersprungen statt die Seite abstürzen zu lassen -
+heilt sich von selbst, sobald der nächste X-Stimmen-Lauf jeden Konflikt neu schreibt. **Lehre für künftige
+Schema-Änderungen an `x_konflikte`/`x_stimmen`:** Frontend immer defensiv gegen das alte Format schreiben, bevor
+deployt wird - die Daten in D1 sind nicht automatisch migriert, nur das nächste Mal überschrieben.
+
+Tests ergänzt (21 in `konflikte.test.ts`, u. a. chronologische Sortierung), `tsc --noEmit` sauber, per
+Mock-Server geprüft, live auf newsspur.de verifiziert (alle 11 Konflikte rendern wieder ohne Fehler).
+
+**Offen:** Pipeline lief kurz vor dem Deploy noch mit altem Code (`Stand vor 7 Min`/`vor 3 Min` bei Russland-
+Ukraine/Iran-USA-Israel, aber leer) - der übernächste Lauf (~alle 4,5 Std) sollte den neuen Verlauf-Stil zeigen,
+dann per Screenshot prüfen, ob das Timeline-Layout mit echten Daten gut aussieht.
+
 ## Etappe 2 fertig (17.10. abends, Commit `e832a91`): X-Listen + 5 weitere Kriege
 
 Umgesetzt: `Seite.listId` in `konflikte.ts` - eine Seite kann statt Handles eine private X-Liste nutzen
