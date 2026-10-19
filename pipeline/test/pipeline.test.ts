@@ -231,12 +231,15 @@ describe('pipelineLauf', () => {
             };
       }),
     };
-    const socialPoster = vi.fn(async () => {});
+    let gepostet: string | undefined;
+    const socialPoster = vi.fn(async (_thema: unknown, zusammenfassung: { schlagzeile: string }) => {
+      gepostet = zusammenfassung.schlagzeile;
+    });
 
     const ergebnis = await pipelineLauf([a1, a2, a3, a4], { store, geminiClient: gemini, socialPoster, socialPostLimit: 1 });
 
     expect(ergebnis.veroeffentlicht).toBe(2);
     expect(socialPoster).toHaveBeenCalledTimes(1);
-    expect(socialPoster.mock.calls[0][1].schlagzeile).toBe('Schweres Erdbeben erschuettert Grossstadt');
+    expect(gepostet).toBe('Schweres Erdbeben erschuettert Grossstadt');
   });
 });

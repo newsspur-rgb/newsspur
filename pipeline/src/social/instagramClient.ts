@@ -8,6 +8,22 @@ const GRAPH_URL = 'https://graph.facebook.com/v21.0';
 const STATUS_POLL_VERSUCHE_MAX = 5;
 const STATUS_POLL_WARTEZEIT_MS = 60_000;
 
+/**
+ * Baut eine Fehlermeldung mit der echten Graph-API-Meldung (z. B. "Session has expired ..."),
+ * nicht nur dem Statuscode - sonst sieht man bei einem Fehlschlag nur "Status 400" und muss
+ * den Aufruf manuell nachstellen, um den eigentlichen Grund zu erfahren.
+ */
+async function graphFehler(antwort: Response, kontext: string): Promise<Error> {
+  let detail = '';
+  try {
+    const daten = (await antwort.json()) as { error?: { message?: string } };
+    if (daten?.error?.message) detail = `: ${daten.error.message}`;
+  } catch {
+    // Antwort war kein (gueltiges) JSON - Statuscode allein reicht dann als Meldung.
+  }
+  return new Error(`${kontext} antwortete mit Status ${antwort.status}${detail}`);
+}
+
 export function erstelleInstagramClient(
   accessToken: string,
   businessAccountId: string,
@@ -22,7 +38,7 @@ export function erstelleInstagramClient(
         body: JSON.stringify({ image_url: bildUrl, caption }),
       });
       if (!containerAntwort.ok) {
-        throw new Error(`Instagram-Media-Erstellung antwortete mit Status ${containerAntwort.status}`);
+        throw await graphFehler(containerAntwort, 'Instagram-Media-Erstellung');
       }
       const { id: creationId } = (await containerAntwort.json()) as { id: string };
 
@@ -32,7 +48,7 @@ export function erstelleInstagramClient(
         body: JSON.stringify({ creation_id: creationId }),
       });
       if (!publishAntwort.ok) {
-        throw new Error(`Instagram-Veroeffentlichung antwortete mit Status ${publishAntwort.status}`);
+        throw await graphFehler(publishAntwort, 'Instagram-Veroeffentlichung');
       }
       const { id: postId } = (await publishAntwort.json()) as { id: string };
       return { postId };
@@ -45,7 +61,7 @@ export function erstelleInstagramClient(
         body: JSON.stringify({ media_type: 'REELS', video_url: videoUrl, caption }),
       });
       if (!containerAntwort.ok) {
-        throw new Error(`Instagram-Reel-Erstellung antwortete mit Status ${containerAntwort.status}`);
+        throw await graphFehler(containerAntwort, 'Instagram-Reel-Erstellung');
       }
       const { id: creationId } = (await containerAntwort.json()) as { id: string };
 
@@ -54,7 +70,7 @@ export function erstelleInstagramClient(
         await warteImpl(STATUS_POLL_WARTEZEIT_MS);
         const statusAntwort = await fetchImpl(`${GRAPH_URL}/${creationId}?fields=status_code&access_token=${accessToken}`);
         if (!statusAntwort.ok) {
-          throw new Error(`Instagram-Reel-Status antwortete mit Status ${statusAntwort.status}`);
+          throw await graphFehler(statusAntwort, 'Instagram-Reel-Status');
         }
         const { status_code: statusCode } = (await statusAntwort.json()) as { status_code: string };
         if (statusCode === 'FINISHED') {
@@ -74,7 +90,7 @@ export function erstelleInstagramClient(
         { method: 'POST' },
       );
       if (!publishAntwort.ok) {
-        throw new Error(`Instagram-Reel-Veroeffentlichung antwortete mit Status ${publishAntwort.status}`);
+        throw await graphFehler(publishAntwort, 'Instagram-Reel-Veroeffentlichung');
       }
       const { id: postId } = (await publishAntwort.json()) as { id: string };
       return { postId };
