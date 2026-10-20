@@ -1,20 +1,19 @@
 import type { Kategorie } from '../rules/kategorien.js';
 
 /** Ländergruppen der X-Stimmen. Die ersten drei entsprechen den newsspur-Kategorien. */
-export type XGruppe = Kategorie | 'usa' | 'westeuropa' | 'eu' | 'russland' | 'china' | 'japan';
+export type XGruppe = Kategorie | 'usa' | 'westeuropa' | 'eu' | 'russland' | 'asien';
 
-export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'nahost', 'usa', 'eu', 'westeuropa', 'russland', 'china', 'japan'];
+export const X_GRUPPEN: XGruppe[] = ['deutschland', 'tuerkei', 'eu', 'usa', 'nahost', 'westeuropa', 'russland', 'asien'];
 
 export const X_GRUPPE_NAME: Record<XGruppe, string> = {
   deutschland: 'Deutschland',
   tuerkei: 'Türkiye',
-  nahost: 'Naher Osten (Israel/Palästina, Iran, Syrien, Irak)',
-  usa: 'USA',
   eu: 'Europäische Union',
+  usa: 'USA',
+  nahost: 'Naher Osten (Israel/Palästina, Iran, Syrien, Irak)',
   westeuropa: 'Frankreich, Großbritannien, Spanien, Belgien',
   russland: 'Russland',
-  china: 'China',
-  japan: 'Japan',
+  asien: 'Asien (China, Japan, Indien, Nord- und Südkorea)',
 };
 
 /**
@@ -24,8 +23,7 @@ export const X_GRUPPE_NAME: Record<XGruppe, string> = {
  */
 export const X_GRUPPE_FOKUS: Partial<Record<XGruppe, string>> = {
   russland: 'Nur Kriege/Konflikte (v. a. Ukraine), harte Vorgehen gegen Opposition/Kriminalität und vergleichbar wichtige Themen - keine Alltagspolitik.',
-  china: 'Nur Kriege/Konflikte (z. B. Taiwan, Südchinesisches Meer), harte Vorgehen gegen Kriminalität/Opposition und vergleichbar wichtige Themen - keine Alltagspolitik.',
-  japan: 'Nur Kriege/Konflikte, Sicherheitspolitik und vergleichbar wichtige Themen - keine Alltagspolitik.',
+  asien: 'Nur Kriege/Konflikte (z. B. Taiwan, Südchinesisches Meer, Korea, Indien-Pakistan), Sicherheitspolitik, harte Vorgehen gegen Kriminalität/Opposition und vergleichbar wichtige Themen - keine Alltagspolitik.',
 };
 
 /**
@@ -122,14 +120,18 @@ export const X_KONTEN: Record<XGruppe, Record<string, string>> = {
     KremlinRussia_E: 'Kreml',
     tass_agency: 'TASS (Staatsagentur)',
   },
-  china: {
+  asien: {
     MFA_China: 'Chinesisches Außenministerium',
     XHNews: 'Xinhua (Staatsagentur)',
-  },
-  japan: {
     JPN_PMO: 'Büro des japanischen Premierministers',
     MofaJapan_en: 'Japanisches Außenministerium',
     NHKWORLD_News: 'NHK World',
+    narendramodi: 'Indiens Premierminister Modi',
+    MEAIndia: 'Indisches Außenministerium',
+    adgpi: 'Indische Armee',
+    KOREA: 'Präsidialamt Südkorea',
+    mofa_kr: 'Südkoreanisches Außenministerium',
+    nknewsorg: 'NK News (unabhängig, zu Nordkorea)',
   },
 };
 

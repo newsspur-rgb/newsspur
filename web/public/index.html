@@ -1101,14 +1101,14 @@
     return ul;
   }
 
-  const X_GRUPPE_LABEL = { deutschland: 'Deutschland', tuerkei: 'Türkiye', nahost: 'Nahost', usa: 'USA', eu: 'EU', westeuropa: 'FR · UK · ES · BE', russland: 'Russland', china: 'China', japan: 'Japan' };
+  const X_GRUPPE_LABEL = { deutschland: 'Deutschland', tuerkei: 'Türkiye', eu: 'EU', usa: 'USA', nahost: 'Nahost', westeuropa: 'FR · UK · ES · BE', russland: 'Russland', asien: 'Asien' };
   let xFilter = 'alle';
 
   function renderX(wrap) {
     viewHead(wrap, 'X-Stimmen', 'Worüber Regierungen, Parteien und Behörden auf X sprechen – zusammengefasst.');
     const m = el('div', 'methode');
     const mb = el('b'); mb.textContent = 'So arbeiten wir: '; m.appendChild(mb);
-    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten – Regierungen, Ministerien, Parteien und große Redaktionen aus Deutschland, Türkiye, dem Nahen Osten (Israel, Iran, Syrien, Irak), den USA, Frankreich, Großbritannien, Spanien, Belgien, der EU, Russland, China und Japan. Eine KI bündelt sie zu Themen, übersetzt und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
+    m.appendChild(document.createTextNode('Alle paar Stunden lesen wir die Posts geprüfter Konten – Regierungen, Ministerien, Parteien und große Redaktionen aus Deutschland, Türkiye, dem Nahen Osten (Israel, Iran, Syrien, Irak), den USA, Frankreich, Großbritannien, Spanien, Belgien, der EU, Russland und Asien (China, Japan, Indien, Nord- und Südkorea). Eine KI bündelt sie zu Themen, übersetzt und fasst zusammen, wer was sagt. Das sind Aussagen der Beteiligten – keine bestätigten Fakten. Jeder Post ist im Original verlinkt.'));
     wrap.appendChild(m);
     if (!XTHEMEN.length) return leer(wrap, 'Gerade keine X-Stimmen – der nächste Lauf kommt in wenigen Stunden.');
 
